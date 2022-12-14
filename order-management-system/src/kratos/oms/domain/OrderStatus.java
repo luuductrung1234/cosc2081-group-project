@@ -12,6 +12,6 @@ package kratos.oms.domain;
 
 public enum OrderStatus {
     CREATED,
-    DELIVERY,
+    DELIVERED,
     PAID
 }

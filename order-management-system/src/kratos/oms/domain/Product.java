@@ -10,5 +10,44 @@
 
 package kratos.oms.domain;
 
+import java.util.UUID;
+
 public class Product {
+    private UUID id;
+    private String name;
+    private double price;
+    private String currency;
+    private Category category;
+
+    public Product(UUID id, String name, double price, String currency, Category category) {
+        this.id = id;
+        this.name = name;
+        this.price = price;
+        this.currency = currency;
+        this.category = category;
+    }
+
+    public Product(String name, double price, String currency, Category category) {
+        this(UUID.randomUUID(), name, price, currency, category);
+    }
+
+    public UUID getId() {
+        return id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public double getPrice() {
+        return price;
+    }
+
+    public String getCurrency() {
+        return currency;
+    }
+
+    public Category getCategory() {
+        return category;
+    }
 }
