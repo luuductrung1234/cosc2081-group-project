@@ -15,8 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-public class Order {
-    private UUID id;
+public class Order extends Domain<UUID> {
     private UUID accountId;
     private OrderStatus status;
     private List<OrderItem> items;
@@ -27,7 +26,7 @@ public class Order {
     private Instant completedOn;
 
     public Order(UUID id, UUID accountId, List<OrderItem> items, double discount) {
-        this.id = id;
+        super(id);
         this.accountId = accountId;
         this.status = OrderStatus.CREATED;
         this.items = items;
@@ -60,6 +59,20 @@ public class Order {
         this.status = OrderStatus.PAID;
         this.completedBy = completedBy;
         this.completedOn = Instant.now();
+    }
+
+    @Override
+    public String serialize() {
+        return null;
+    }
+
+    /**
+     * override static method Domain.deserialize
+     * @param data serialized string data
+     * @return new instance of Account
+     */
+    public static Account deserialize(String data) {
+        return null;
     }
 
     public UUID getId() {

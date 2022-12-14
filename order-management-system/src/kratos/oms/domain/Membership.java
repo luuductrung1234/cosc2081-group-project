@@ -11,6 +11,7 @@
 package kratos.oms.domain;
 
 public enum Membership {
+    None,
     SILVER,
     GOLD,
     PLATINUM

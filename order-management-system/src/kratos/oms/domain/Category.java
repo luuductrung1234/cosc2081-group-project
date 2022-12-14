@@ -12,17 +12,30 @@ package kratos.oms.domain;
 
 import java.util.UUID;
 
-public class Category {
-    private UUID id;
+public class Category extends Domain<UUID>{
     private String name;
 
     public Category(UUID id, String name) {
-        this.id = id;
+        super(id);
         this.name = name;
     }
 
     public Category(String name) {
         this(UUID.randomUUID(), name);
+    }
+
+    @Override
+    public String serialize() {
+        return null;
+    }
+
+    /**
+     * override static method Domain.deserialize
+     * @param data serialized string data
+     * @return new instance of Account
+     */
+    public static Account deserialize(String data) {
+        return null;
     }
 
     public UUID getId() {
