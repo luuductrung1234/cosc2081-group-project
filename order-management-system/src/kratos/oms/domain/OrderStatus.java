@@ -10,5 +10,8 @@
 
 package kratos.oms.domain;
 
-public class Item {
+public enum OrderStatus {
+    CREATED,
+    DELIVERY,
+    PAID
 }

@@ -10,5 +10,5 @@
 
 package kratos.oms.domain;
 
-public class Customer {
+public class Order {
 }
