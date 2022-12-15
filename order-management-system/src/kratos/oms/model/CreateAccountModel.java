@@ -10,18 +10,26 @@
 
 package kratos.oms.model;
 
-import kratos.oms.domain.Membership;
 import kratos.oms.domain.Role;
+import kratos.oms.seedwork.Length;
+import kratos.oms.seedwork.NotBlank;
+import kratos.oms.seedwork.NotNull;
 
 public class CreateAccountModel {
+    @NotBlank
+    @Length(max = 100)
     private String username;
+    @NotBlank
+    @Length(max = 100)
     private String password;
+    @NotBlank
+    @Length(max = 100)
     private String fullName;
+    @NotNull
     private Role role;
     private String phone;
     private String email;
     private String address;
-    private Membership membership;
 
     public String getUsername() {
         return username;
@@ -77,13 +85,5 @@ public class CreateAccountModel {
 
     public void setAddress(String address) {
         this.address = address;
-    }
-
-    public Membership getMembership() {
-        return membership;
-    }
-
-    public void setMembership(Membership membership) {
-        this.membership = membership;
     }
 }

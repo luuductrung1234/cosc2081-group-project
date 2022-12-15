@@ -10,6 +10,13 @@
 
 package kratos.oms.service;
 
+import kratos.oms.domain.Role;
+import kratos.oms.model.CreateAccountModel;
+import kratos.oms.model.LoginModel;
+import kratos.oms.seedwork.Helpers;
+import kratos.oms.seedwork.InputOption;
+
+import java.util.ArrayList;
 import java.util.Scanner;
 
 public class MenuService {
@@ -21,24 +28,86 @@ public class MenuService {
     }
 
     public void homeScreen() {
-        welcomeScreen();
         if (!authService.isAuthenticated()) {
-            loginScreen();
+            Helpers.requestSelect(scanner, "Your choice [0-1]: ", new ArrayList<>() {{
+                add(new InputOption<>("login", () -> loginScreen()));
+                add(new InputOption<>("register as customer", () -> registrationScreen(Role.CUSTOMER)));
+                add(new InputOption<>("register as admin", () -> registrationScreen(Role.ADMIN)));
+                add(new InputOption<>("go back", () -> welcomeScreen()));
+            }});
         }
         System.out.println("=============================");
         System.out.println("=            HOME           =");
         System.out.println("=============================");
+        Helpers.requestSelect(scanner, "Your choice [0-1]: ", new ArrayList<>() {{
+            add(new InputOption<>("logout", authService::logout));
+            add(new InputOption<>("go back", () -> welcomeScreen()));
+        }});
+    }
+
+    public void profileScreen() {
+        // TODO: implement
+    }
+
+    public void productScreen() {
+        // TODO: implement
+    }
+
+    public void productDetailScreen() {
+        // TODO: implement
+    }
+
+    public void categoryScreen() {
+        // TODO: implement
+    }
+
+    public void categoryDetailScreen() {
+        // TODO: implement
+    }
+
+    public void orderScreen() {
+        // TODO: implement
+    }
+
+    public void orderDetailScreen() {
+        // TODO: implement
+    }
+
+    public void customerScreen() {
+        // TODO: implement
+    }
+
+    public void customerDetailScreen() {
+        // TODO: implement
+    }
+
+    public void statisticScreen() {
+        // TODO: implement
     }
 
     public void loginScreen() {
         System.out.println("=============================");
         System.out.println("=           LOGIN           =");
         System.out.println("=============================");
-        System.out.println("Enter your username: ");
-        String username = scanner.nextLine();
-        System.out.println("Enter your password: ");
-        String password = scanner.nextLine();
-        authService.login(username, password);
+        LoginModel model = new LoginModel();
+        Helpers.requestInput(scanner, "Enter your username: ", "username", model);
+        Helpers.requestInput(scanner, "Enter your password: ", "password", model);
+        authService.login(model);
+    }
+
+    public void registrationScreen(Role role) {
+        System.out.println("=============================");
+        System.out.println("=         REGISTER          =");
+        System.out.println("=============================");
+        CreateAccountModel model = new CreateAccountModel();
+        model.setRole(role);
+        Helpers.requestInput(scanner, "Enter your username: ", "username", model);
+        Helpers.requestInput(scanner, "Enter your password: ", "password", model);
+        Helpers.requestInput(scanner, "Enter your full name: ", "fullName", model);
+        Helpers.requestInput(scanner, "Enter your phone: ", "phone", model);
+        Helpers.requestInput(scanner, "Enter your email: ", "email", model);
+        Helpers.requestInput(scanner, "Enter your address: ", "address", model);
+        authService.register(model);
     }
 
     public void welcomeScreen() {
@@ -56,5 +125,6 @@ public class MenuService {
         System.out.println();
         System.out.println("Press any button to continue...");
         scanner.next();
+        homeScreen();
     }
 }
