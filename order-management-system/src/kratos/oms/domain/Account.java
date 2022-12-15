@@ -12,8 +12,7 @@ package kratos.oms.domain;
 
 import java.util.UUID;
 
-public class Account {
-    private UUID id;
+public class Account extends Domain<UUID> {
     private String username;
     private String hashedPassword;
     private String fullName;
@@ -21,7 +20,7 @@ public class Account {
     private Profile profile;
 
     public Account(UUID id, String username, String hashedPassword, String fullName, Role role, Profile profile) {
-        this.id = id;
+        super(id);
         this.username = username;
         this.hashedPassword = hashedPassword;
         this.fullName = fullName;
@@ -35,6 +34,25 @@ public class Account {
 
     public Account(String username, String hashedPassword, String fullName, Role role, Profile profile) {
         this(UUID.randomUUID(), username, hashedPassword, fullName, role, profile);
+    }
+
+    public void setMembership(Membership membership) {
+        this.profile.setMembership(membership);
+    }
+
+    @Override
+    public String serialize() {
+        return null;
+    }
+
+    /**
+     * override static method Domain.deserialize
+     *
+     * @param data serialized string data
+     * @return new instance of Account
+     */
+    public static Account deserialize(String data) {
+        return null;
     }
 
     public UUID getId() {

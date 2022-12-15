@@ -10,5 +10,45 @@
 
 package kratos.oms.domain;
 
-public class OrderItem {
+import java.util.UUID;
+
+public class OrderItem extends Domain<UUID> {
+    private UUID orderId;
+    private UUID productId;
+
+    public OrderItem(UUID id, UUID orderId, UUID productId) {
+        super(id);
+        this.orderId = orderId;
+        this.productId = productId;
+    }
+
+    public OrderItem(UUID orderId, UUID productId) {
+        this(UUID.randomUUID(), orderId, productId);
+    }
+
+    @Override
+    public String serialize() {
+        return null;
+    }
+
+    /**
+     * override static method Domain.deserialize
+     * @param data serialized string data
+     * @return new instance of Account
+     */
+    public static Account deserialize(String data) {
+        return null;
+    }
+
+    public UUID getId() {
+        return id;
+    }
+
+    public UUID getOrderId() {
+        return orderId;
+    }
+
+    public UUID getProductId() {
+        return productId;
+    }
 }

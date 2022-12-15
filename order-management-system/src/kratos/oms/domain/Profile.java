@@ -16,11 +16,11 @@ public class Profile {
     private String address;
     private Membership membership;
 
-    public Profile(String phone, String email, String address, Membership membership) {
+    public Profile(String phone, String email, String address) {
         this.phone = phone;
         this.email = email;
         this.address = address;
-        this.membership = membership;
+        this.membership = null;
     }
 
     public String getPhone() {
@@ -37,5 +37,9 @@ public class Profile {
 
     public Membership getMembership() {
         return membership;
+    }
+
+    public void setMembership(Membership membership) {
+        this.membership = membership;
     }
 }
