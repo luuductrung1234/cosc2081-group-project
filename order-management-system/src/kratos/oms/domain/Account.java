@@ -10,6 +10,10 @@
 
 package kratos.oms.domain;
 
+import kratos.oms.seedwork.Helpers;
+
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 public class Account extends Domain<UUID> {
@@ -42,7 +46,18 @@ public class Account extends Domain<UUID> {
 
     @Override
     public String serialize() {
-        return null;
+        List<String> fields = new ArrayList<>() {{
+            add(id.toString());
+            add(username);
+            add(hashedPassword);
+            add(fullName);
+            add(role.toString());
+            add(profile == null || profile.getPhone() == null ? "" : profile.getPhone());
+            add(profile == null || profile.getEmail() == null ? "" : profile.getEmail());
+            add(profile == null || profile.getAddress() == null ? "" : profile.getAddress());
+            add(profile == null || profile.getMembership() == null ? "" : profile.getMembership().toString());
+        }};
+        return String.join(",", fields);
     }
 
     /**
@@ -52,7 +67,19 @@ public class Account extends Domain<UUID> {
      * @return new instance of Account
      */
     public static Account deserialize(String data) {
-        return null;
+        if (Helpers.isNullOrEmpty(data))
+            throw new IllegalArgumentException("data to deserialize should not be empty!");
+        String[] fields = data.split(",", 9);
+        Profile deserializedProfile = Helpers.isNullOrEmpty(fields[5]) && Helpers.isNullOrEmpty(fields[6])
+                && Helpers.isNullOrEmpty(fields[7]) && Helpers.isNullOrEmpty(fields[8])
+                ? null
+                : new Profile(fields[5], fields[6], fields[7], Membership.valueOf(fields[8]));
+        return new Account(UUID.fromString(fields[0]),
+                fields[1],
+                fields[2],
+                fields[3],
+                Role.valueOf(fields[4]),
+                deserializedProfile);
     }
 
     public UUID getId() {

@@ -16,6 +16,7 @@ import kratos.oms.model.CreateAccountModel;
 import kratos.oms.model.LoginModel;
 import kratos.oms.repository.AccountRepository;
 import kratos.oms.seedwork.Helpers;
+import kratos.oms.seedwork.Logger;
 import kratos.oms.seedwork.Principal;
 
 import java.security.NoSuchAlgorithmException;
@@ -33,38 +34,54 @@ public class AuthService {
     }
 
     public boolean login(LoginModel model) {
-        if(principal != null)
+        if (principal != null)
             throw new IllegalStateException("Already logged in!");
         Optional<Account> accountOpt = accountRepository.findByUsername(model.getUsername());
-        if(accountOpt.isEmpty())
+        if (accountOpt.isEmpty())
             return false;
         Account account = accountOpt.get();
         try {
-            return account.getHashedPassword().equals(Helpers.passwordHash(model.getPassword()));
+            if (!account.getHashedPassword().equals(Helpers.passwordHash(model.getPassword())))
+                return false;
+            principal = new Principal(account.getId(),
+                    account.getUsername(),
+                    account.getRole(),
+                    account.getProfile() == null
+                            ? null
+                            : account.getProfile().getMembership());
+            return true;
         } catch (NoSuchAlgorithmException e) {
+            Logger.printError(this.getClass().getName(), "login", e);
             return false;
         }
     }
 
     public void logout() {
-        if(principal == null)
+        if (principal == null)
             throw new IllegalStateException("Already logged out!");
         principal = null;
     }
 
     public boolean register(CreateAccountModel model) {
+        Profile profile = Helpers.isNullOrEmpty(model.getPhone())
+                && Helpers.isNullOrEmpty(model.getEmail())
+                && Helpers.isNullOrEmpty(model.getAddress())
+                ? null : new Profile(model.getPhone(), model.getEmail(), model.getAddress());
         try {
             Account account = new Account(model.getUsername(),
                     Helpers.passwordHash(model.getPassword()),
                     model.getFullName(),
                     model.getRole(),
-                    new Profile(model.getPhone(),
-                            model.getEmail(),
-                            model.getAddress()));
+                    profile);
             return accountRepository.add(account);
         } catch (NoSuchAlgorithmException e) {
+            Logger.printError(this.getClass().getName(), "register", e);
             return false;
         }
+    }
+
+    public Principal getPrincipal() {
+        return principal;
     }
 
     public boolean isAuthenticated() {

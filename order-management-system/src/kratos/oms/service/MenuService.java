@@ -5,7 +5,8 @@
   Assessment: Assignment 3
   Author: Luu Duc Trung
   ID: s3951127
-  Acknowledgement: n/a
+  Acknowledgement:
+    - WhiteFang34, "How to print color in console using System.out.println?", Stackoverflow, https://stackoverflow.com/a/5762502
 */
 
 package kratos.oms.service;
@@ -15,116 +16,201 @@ import kratos.oms.model.CreateAccountModel;
 import kratos.oms.model.LoginModel;
 import kratos.oms.seedwork.Helpers;
 import kratos.oms.seedwork.InputOption;
+import kratos.oms.seedwork.Logger;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
 public class MenuService {
     private final Scanner scanner = new Scanner(System.in);
     private final AuthService authService;
+    private final CartService cartService;
 
-    public MenuService(AuthService authService) {
+    public MenuService(AuthService authService, CartService cartService) {
         this.authService = authService;
+        this.cartService = cartService;
     }
 
     public void homeScreen() {
-        if (!authService.isAuthenticated()) {
-            Helpers.requestSelect(scanner, "Your choice [0-1]: ", new ArrayList<>() {{
-                add(new InputOption<>("login", () -> loginScreen()));
-                add(new InputOption<>("register as customer", () -> registrationScreen(Role.CUSTOMER)));
-                add(new InputOption<>("register as admin", () -> registrationScreen(Role.ADMIN)));
-                add(new InputOption<>("go back", () -> welcomeScreen()));
-            }});
+        while (true) {
+            if (!authService.isAuthenticated()) {
+                Helpers.requestSelect(scanner, "Your choice [0-3]: ", new ArrayList<>() {{
+                    add(new InputOption<>("login", () -> loginScreen()));
+                    add(new InputOption<>("register as customer", () -> registrationScreen(Role.CUSTOMER)));
+                    add(new InputOption<>("register as admin", () -> registrationScreen(Role.ADMIN)));
+                    add(new InputOption<>("exit", () -> exitScreen()));
+                }});
+                continue;
+            }
+            banner("home");
+            Logger.printInfo("Welcome back %s! checkout what we can help you...", authService.getPrincipal().getUsername());
+            List<InputOption<Runnable>> commonOptions = new ArrayList<>() {{
+                add(new InputOption<>("profile", () -> profileScreen()));
+                add(new InputOption<>("logout", () -> {
+                    authService.logout();
+                    cartService.save();
+                    Logger.printSuccess("Logout successfully.");
+                }));
+                add(new InputOption<>("exit", () -> exitScreen()));
+            }};
+            switch (authService.getPrincipal().getRole()) {
+                case ADMIN:
+                    Helpers.requestSelect(scanner, "Your choice [0-7]: ", new ArrayList<>() {{
+                        add(new InputOption<>("statistic", () -> statisticScreen()));
+                        add(new InputOption<>("order list", () -> orderScreen()));
+                        add(new InputOption<>("product list", () -> productScreen()));
+                        add(new InputOption<>("category list", () -> categoryScreen()));
+                        add(new InputOption<>("customer list", () -> customerScreen()));
+                        addAll(commonOptions);
+                    }});
+                    break;
+                case CUSTOMER:
+                    Logger.printInfo("You have %d item(s) in cart", cartService.getCachedCart().getTotalCount());
+                    Helpers.requestSelect(scanner, "Your choice [0-1]: ", new ArrayList<>() {{
+                        add(new InputOption<>("product list", () -> productScreen()));
+                        add(new InputOption<>("order list", () -> orderScreen()));
+                        add(new InputOption<>("check membership", () -> {
+                            System.out.printf("Your membership is: %s%n", authService.getPrincipal().getMembership());
+                        }));
+                        addAll(commonOptions);
+                    }});
+                    break;
+                default:
+                    throw new IllegalStateException(String.format("Role: %s is not supported", authService.getPrincipal().getRole()));
+            }
         }
-        System.out.println("=============================");
-        System.out.println("=            HOME           =");
-        System.out.println("=============================");
-        Helpers.requestSelect(scanner, "Your choice [0-1]: ", new ArrayList<>() {{
-            add(new InputOption<>("logout", authService::logout));
-            add(new InputOption<>("go back", () -> welcomeScreen()));
-        }});
     }
 
     public void profileScreen() {
+        banner("profile");
         // TODO: implement
     }
 
     public void productScreen() {
+        banner("products");
         // TODO: implement
     }
 
     public void productDetailScreen() {
+        banner("product");
         // TODO: implement
     }
 
     public void categoryScreen() {
+        banner("categories");
         // TODO: implement
     }
 
     public void categoryDetailScreen() {
+        banner("category");
         // TODO: implement
     }
 
     public void orderScreen() {
+        banner("orders");
         // TODO: implement
     }
 
     public void orderDetailScreen() {
+        banner("order");
         // TODO: implement
     }
 
     public void customerScreen() {
+        banner("customers");
         // TODO: implement
     }
 
     public void customerDetailScreen() {
+        banner("customer");
         // TODO: implement
     }
 
     public void statisticScreen() {
+        banner("statistic");
         // TODO: implement
     }
 
     public void loginScreen() {
-        System.out.println("=============================");
-        System.out.println("=           LOGIN           =");
-        System.out.println("=============================");
+        banner("login");
         LoginModel model = new LoginModel();
-        Helpers.requestInput(scanner, "Enter your username: ", "username", model);
-        Helpers.requestInput(scanner, "Enter your password: ", "password", model);
-        authService.login(model);
+        Helpers.loopRequest(scanner, () -> {
+            try {
+                Helpers.requestInput(scanner, "Enter your username: ", "username", model);
+                Helpers.requestInput(scanner, "Enter your password: ", "password", model);
+                if(authService.login(model)){
+                    cartService.load();
+                    return true;
+                }
+                Logger.printDanger("Invalid username or password!");
+            } catch (NoSuchFieldException e) {
+                Logger.printError(this.getClass().getName(), "loginScreen", e);
+            }
+            return false;
+        });
     }
 
     public void registrationScreen(Role role) {
-        System.out.println("=============================");
-        System.out.println("=         REGISTER          =");
-        System.out.println("=============================");
+        banner("register");
         CreateAccountModel model = new CreateAccountModel();
         model.setRole(role);
-        Helpers.requestInput(scanner, "Enter your username: ", "username", model);
-        Helpers.requestInput(scanner, "Enter your password: ", "password", model);
-        Helpers.requestInput(scanner, "Enter your full name: ", "fullName", model);
-        Helpers.requestInput(scanner, "Enter your phone: ", "phone", model);
-        Helpers.requestInput(scanner, "Enter your email: ", "email", model);
-        Helpers.requestInput(scanner, "Enter your address: ", "address", model);
-        authService.register(model);
+        try {
+            Helpers.requestInput(scanner, "Enter your username: ", "username", model);
+            Helpers.requestInput(scanner, "Enter your password: ", "password", model);
+            Helpers.requestInput(scanner, "Enter your full name: ", "fullName", model);
+            if(role == Role.CUSTOMER) {
+                Helpers.requestInput(scanner, "Enter your phone: ", "phone", model);
+                Helpers.requestInput(scanner, "Enter your email: ", "email", model);
+                Helpers.requestInput(scanner, "Enter your address: ", "address", model);
+            }
+            authService.register(model);
+            Logger.printSuccess("Register new account successfully.");
+        } catch (NoSuchFieldException e) {
+            Logger.printError(this.getClass().getName(), "registrationScreen", e);
+        }
+    }
+
+    public void exitScreen() {
+        cartService.save();
+        System.out.println("Goodbye! See you again.");
+        System.exit(0);
     }
 
     public void welcomeScreen() {
-        System.out.println("=============================");
-        System.out.println("=          WELCOME          =");
-        System.out.println("=============================");
-        System.out.println("COSC2081 GROUP ASSIGNMENT");
-        System.out.println("STORE ORDER MANAGEMENT SYSTEM");
-        System.out.println("Instructor: Mr. Tom Huynh & Dr. Phong Ngo");
-        System.out.println("Group: Kratos");
-        System.out.println("s3951127, Luu Duc Trung");
-        System.out.println("sXXXXXXX, Student Name");
-        System.out.println("sXXXXXXX, Student Name");
-        System.out.println("sXXXXXXX, Student Name");
+        banner("welcome", "", "*");
+        System.out.println("*\tCOSC2081 GROUP ASSIGNMENT");
+        System.out.println("*\tSTORE ORDER MANAGEMENT SYSTEM");
+        System.out.println("*\tInstructor: Mr. Tom Huynh & Dr. Phong Ngo");
+        System.out.println("*\tGroup: Kratos");
+        System.out.println("*\ts3951127, Luu Duc Trung");
+        System.out.println("*\ts3891941, Yunjae Kim");
+        System.out.println("*\ts3938007, Pham Hoang Long");
+        System.out.println("*\ts3915034, Do Phan Nhat Anh");
         System.out.println();
-        System.out.println("Press any button to continue...");
-        scanner.next();
-        homeScreen();
+        System.out.print("Do you want to continue? [y/n]: ");
+        String answer = scanner.nextLine();
+        if (answer != null && (answer.equalsIgnoreCase("yes") || answer.equalsIgnoreCase("y")))
+            homeScreen();
+        else
+            exitScreen();
+    }
+
+    private void banner(String title) {
+        banner(title, 10, "", "");
+    }
+
+    private void banner(String title, String topText, String bottomText) {
+        banner(title, 10, topText, bottomText);
+    }
+
+    private void banner(String title, int padding, String topText, String bottomText) {
+        String body = "*" + " ".repeat(padding) + title.toUpperCase() + " ".repeat(padding) + "*";
+        String border = "*".repeat(body.length());
+        System.out.println(topText);
+        System.out.println(border);
+        System.out.println(body);
+        System.out.println(border);
+        System.out.println(bottomText);
     }
 }

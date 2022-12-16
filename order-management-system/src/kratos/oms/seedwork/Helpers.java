@@ -6,8 +6,8 @@
   Author: Luu Duc Trung
   ID: s3951127
   Acknowledgement:
-    - Colin Hebert, Stackoverflow, https://stackoverflow.com/a/3598792
-    - Eduardo Dennis, Stackoverflow, https://stackoverflow.com/a/43294412
+    - Colin Hebert, "Check whether a String is not Null and not Empty", Stackoverflow, https://stackoverflow.com/a/3598792
+    - Eduardo Dennis, "How to hash some String with SHA-256 in Java?", Stackoverflow, https://stackoverflow.com/a/43294412
 */
 
 package kratos.oms.seedwork;
@@ -22,6 +22,8 @@ import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
 import java.util.Scanner;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class Helpers {
     public static boolean isNullOrEmpty(String str) {
@@ -34,6 +36,18 @@ public class Helpers {
         return Base64.getEncoder().encodeToString(hash);
     }
 
+    public static void loopRequest(Scanner scanner, Supplier<Boolean> action) {
+        while (true) {
+            if(action.get())
+                break;
+            System.out.print("Do you want to retry? [y/n]: ");
+            String answer = scanner.nextLine();
+            if (answer != null && (answer.equalsIgnoreCase("yes") || answer.equalsIgnoreCase("y")))
+                continue;
+            break;
+        }
+    }
+
     public static void requestSelect(Scanner scanner, String label, List<InputOption<Runnable>> options) {
         System.out.println();
         if (options == null || options.size() == 0)
@@ -43,23 +57,29 @@ public class Helpers {
         }
         while (true) {
             System.out.print(label);
-            int choice = Integer.parseInt(scanner.nextLine());
-            if (choice < 0 || choice >= options.size())
-                System.err.printf("There is no option [%d]%n", choice);
-            options.get(choice).getAction().run();
-            return;
+            try {
+                int choice = Integer.parseInt(scanner.nextLine());
+                if (choice < 0 || choice >= options.size()) {
+                    Logger.printWarning("There is no option [%d]", choice);
+                    continue;
+                }
+                options.get(choice).getAction().run();
+                return;
+            } catch (NumberFormatException e) {
+                Logger.printWarning("Please enter a valid number!");
+            }
         }
     }
 
-    public static <TClass> void requestInput(Scanner scanner, String label, String fieldName, TClass obj) {
+    public static <TClass, TField> void requestInput(Scanner scanner, String label, String fieldName, Function<String, TField> converter, TClass obj) throws NoSuchFieldException {
         boolean isValid = false;
         while (!isValid) {
             System.out.print(label);
-            String input = scanner.nextLine();
+            TField input = converter.apply(scanner.nextLine());
             ValidationResult validationResult = validate(fieldName, input, obj.getClass());
             isValid = validationResult.isValid();
             if (!isValid) {
-                System.out.printf("Fail! %s%n", validationResult.getErrorMessage());
+                Logger.printWarning("Invalid! %s", validationResult.getErrorMessage());
                 continue;
             }
             Method setter = Arrays.stream(obj.getClass().getMethods())
@@ -75,31 +95,33 @@ public class Helpers {
         }
     }
 
-    public static <T> void requestIntInput(Scanner scanner, String label, Class<T> clazz) {
-
+    public static <TClass> void requestInput(Scanner scanner, String label, String fieldName, TClass obj) throws NoSuchFieldException {
+        requestInput(scanner, label, fieldName, (value) -> value, obj);
     }
 
-    public static <T> void requestLongInput(Scanner scanner, String label, Class<T> clazz) {
-
+    public static <TClass> void requestIntInput(Scanner scanner, String label, String fieldName, TClass obj) throws NoSuchFieldException {
+        requestInput(scanner, label, fieldName, Integer::parseInt, obj);
     }
 
-    public static <T> void requestFloatInput(Scanner scanner, String label, Class<T> clazz) {
-
+    public static <TClass> void requestLongInput(Scanner scanner, String label, String fieldName, TClass obj) throws NoSuchFieldException {
+        requestInput(scanner, label, fieldName, Long::parseLong, obj);
     }
 
-    public static <T> void requestDoubleInput(Scanner scanner, String label, Class<T> clazz) {
-
+    public static <TClass> void requestFloatInput(Scanner scanner, String label, String fieldName, TClass obj) throws NoSuchFieldException {
+        requestInput(scanner, label, fieldName, Float::parseFloat, obj);
     }
 
-    public static <T> void requestBoolInput(Scanner scanner, String label, Class<T> clazz) {
-
+    public static <TClass> void requestDoubleInput(Scanner scanner, String label, String fieldName, TClass obj) throws NoSuchFieldException {
+        requestInput(scanner, label, fieldName, Double::parseDouble, obj);
     }
 
-    public static <TClass, TField> ValidationResult validate(String fieldName, TField value, Class<TClass> clazz) {
-        Field field = Arrays.stream(clazz.getFields()).filter(f -> f.getName().equals(fieldName)).findFirst().orElse(null);
-        if (field == null)
-            throw new IllegalArgumentException(String.format("Field: %s not found in Class: %s", fieldName, clazz.getName()));
+    public static <TClass> void requestBoolInput(Scanner scanner, String label, String fieldName, TClass obj) throws NoSuchFieldException {
+        requestInput(scanner, label, fieldName, Boolean::parseBoolean, obj);
+    }
 
+    public static <TClass, TField> ValidationResult validate(String fieldName, TField value, Class<TClass> clazz) throws NoSuchFieldException {
+        Field field = clazz.getDeclaredField(fieldName);
+        field.setAccessible(true);
         Length lengthAnno = field.getAnnotation(Length.class);
         if (lengthAnno != null && value != null) {
             if (value instanceof String) {
@@ -140,4 +162,5 @@ public class Helpers {
         }
         return ValidationResult.validInstance();
     }
+
 }

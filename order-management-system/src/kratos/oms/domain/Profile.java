@@ -16,11 +16,15 @@ public class Profile {
     private String address;
     private Membership membership;
 
-    public Profile(String phone, String email, String address) {
+    public Profile(String phone, String email, String address, Membership membership) {
         this.phone = phone;
         this.email = email;
         this.address = address;
-        this.membership = null;
+        this.membership = membership;
+    }
+
+    public Profile(String phone, String email, String address) {
+        this(phone, email, address, Membership.NONE);
     }
 
     public String getPhone() {
