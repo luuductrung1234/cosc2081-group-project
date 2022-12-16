@@ -1,0 +1,3 @@
+6d34bf9b-b1d3-4a64-be6c-51df4a8f3800,trung,gzJBYNQ72zJ+VVtr6M5lToxpPpXApPEIF0mbueAiSh0=,trung,CUSTOMER,,,,NONE
+7bd458ea-8e61-4672-ad0e-209c12f674ea,customer,tsRYY4deNEh8o8FV7RRe/hKnRYHie+/sWqZhuO6Mpt0=,john doe,CUSTOMER,,test@email.com,,NONE
+f8ed39b6-a42c-4c37-9aba-2441886903ee,admin,jGl25bVBBBW96Qi9Te4V37Fnqchz/Eu4qB9vKrRIqRg=,admin,ADMIN,,,,

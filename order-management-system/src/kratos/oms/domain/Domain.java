@@ -17,12 +17,12 @@ public abstract class Domain<TId> {
     }
 
     /**
-     * This static method will be overrided by subclass(es)
+     * This static method will be overridden by subclass(es)
      *
      * @param data serialized string data
      * @return new instance of Account
      */
     public static <TId> Domain<TId> deserialize(String data) {
-        throw new UnsupportedOperationException("fromString() has not been implemented!");
+        throw new UnsupportedOperationException("deserialize() has not been implemented!");
     }
 }

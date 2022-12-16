@@ -15,15 +15,17 @@ import java.util.UUID;
 public class OrderItem extends Domain<UUID> {
     private UUID orderId;
     private UUID productId;
+    private int quantity;
 
-    public OrderItem(UUID id, UUID orderId, UUID productId) {
+    public OrderItem(UUID id, UUID orderId, UUID productId, int quantity) {
         super(id);
         this.orderId = orderId;
         this.productId = productId;
+        this.quantity = quantity;
     }
 
-    public OrderItem(UUID orderId, UUID productId) {
-        this(UUID.randomUUID(), orderId, productId);
+    public OrderItem(UUID orderId, UUID productId, int quantity) {
+        this(UUID.randomUUID(), orderId, productId, quantity);
     }
 
     @Override
@@ -50,5 +52,9 @@ public class OrderItem extends Domain<UUID> {
 
     public UUID getProductId() {
         return productId;
+    }
+
+    public int getQuantity() {
+        return quantity;
     }
 }

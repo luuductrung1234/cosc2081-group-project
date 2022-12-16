@@ -1,10 +1,13 @@
 package kratos.oms.repository;
 
 import kratos.oms.domain.Account;
+import kratos.oms.seedwork.Logger;
 
 import java.io.IOException;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 public class FileAccountRepositoryImpl extends BaseFileRepository<UUID, Account> implements AccountRepository {
     public FileAccountRepositoryImpl(String fileUrl) {
@@ -14,8 +17,9 @@ public class FileAccountRepositoryImpl extends BaseFileRepository<UUID, Account>
     @Override
     public List<Account> listAll() {
         try {
-            return this.read().stream().collect(Collectors.toUnmodifiableList());
+            return new ArrayList<>(this.read(Account.class));
         } catch (IOException e) {
+            Logger.printError(this.getClass().getName(), "listAll", e);
             return new ArrayList<>();
         }
     }
@@ -33,6 +37,21 @@ public class FileAccountRepositoryImpl extends BaseFileRepository<UUID, Account>
             this.write(accounts);
             return true;
         } catch (IOException e) {
+            Logger.printError(this.getClass().getName(), "add", e);
+            return false;
+        }
+    }
+
+    @Override
+    public boolean update(Account account) {
+        List<Account> accounts = listAll();
+        accounts.removeIf(a -> a.getId().equals(account.getId()));
+        accounts.add(account);
+        try {
+            this.write(accounts);
+            return true;
+        } catch (IOException e) {
+            Logger.printError(this.getClass().getName(), "update", e);
             return false;
         }
     }

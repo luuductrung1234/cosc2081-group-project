@@ -9,4 +9,5 @@ public interface AccountRepository {
     List<Account> listAll();
     Optional<Account> findByUsername(String username);
     boolean add(Account account);
+    boolean update(Account account);
 }
