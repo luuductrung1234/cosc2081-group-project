@@ -32,9 +32,7 @@ public class Cart extends Domain<UUID> {
     }
 
     @Override
-    public String serialize() {
-        return null;
-    }
+    public String serialize() {return null;}
 
     /**
      * override static method Domain.deserialize

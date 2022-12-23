@@ -41,6 +41,7 @@ public class Product extends Domain<UUID> {
      * @return new instance of Account
      */
     public static Account deserialize(String data) {
+
         return null;
     }
 
@@ -62,5 +63,16 @@ public class Product extends Domain<UUID> {
 
     public Category getCategory() {
         return category;
+    }
+
+    @Override
+    public String toString() {
+        String category=(this.category==null)?"none":this.category.getName();
+        return "Product{" +
+                "name='" + name + '\'' +
+                ", price=" + price +
+                ", currency='" + currency + '\'' +
+                ", category=" + category +
+                '}';
     }
 }

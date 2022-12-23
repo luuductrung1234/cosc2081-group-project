@@ -11,9 +11,13 @@
 
 package kratos.oms.service;
 
+import kratos.oms.domain.Category;
 import kratos.oms.domain.Role;
+import kratos.oms.model.CategoryModel;
 import kratos.oms.model.CreateAccountModel;
 import kratos.oms.model.LoginModel;
+import kratos.oms.model.ProductModel;
+import kratos.oms.repository.FileProductRepository;
 import kratos.oms.seedwork.Helpers;
 import kratos.oms.seedwork.InputOption;
 import kratos.oms.seedwork.Logger;
@@ -26,10 +30,12 @@ public class MenuService {
     private final Scanner scanner = new Scanner(System.in);
     private final AuthService authService;
     private final CartService cartService;
+    private final ProductService productService;
 
-    public MenuService(AuthService authService, CartService cartService) {
+    public MenuService(AuthService authService, CartService cartService, ProductService productService) {
         this.authService = authService;
         this.cartService = cartService;
+        this.productService=productService;
     }
 
     public void homeScreen() {
@@ -89,12 +95,41 @@ public class MenuService {
 
     public void productScreen() {
         banner("products");
-        // TODO: implement
-    }
+        ProductModel model = new ProductModel();
+        try {
+            Helpers.requestInput(scanner, "Enter Product Name: ", "name", model);
+            Helpers.requestInput(scanner, "Enter Product From Price: ", "FromPrice", model);
+            Helpers.requestInput(scanner, "Enter Product To Price: ", "ToPrice", model);
+            Helpers.requestSelect(scanner, "How would you like to sort the items [0-3]: ", new ArrayList<>() {{
+                add(new InputOption<>("[0] Price low to high", () -> model.setSortedBy("0")));
+                add(new InputOption<>("[1] Price high to low", () -> model.setSortedBy("1")));
+                add(new InputOption<>("[2] Alphabetically", () -> model.setSortedBy("2")));
+                add(new InputOption<>("[3] Inverse Alphabet",  () -> model.setSortedBy("3")));
+            }});
+//            Helpers.requestSelect(scanner, "Choose the category [0-3]: ", new ArrayList<>() {{
+//                add(new InputOption<>("[0] Category1", () -> model.setCategory(Category)));
+//                add(new InputOption<>("[1] Category2", () -> model.setCategory("1")));
+//                add(new InputOption<>("[2] Category3", () -> model.setCategory("2")));
+//                add(new InputOption<>("[3] Category4", () -> model.setCategory("3")));
+//            }});
+            productService.search(model);
+
+            } catch (NoSuchFieldException ex) {
+            Logger.printError(this.getClass().getName(), "productScreen", ex);
+        }
+
+        }
+
 
     public void productDetailScreen() {
         banner("product");
-        // TODO: implement
+        ProductModel model = new ProductModel();
+        try {
+            Helpers.requestInput(scanner, "Enter Product ID: ", "productID", model);
+            productService.productDetail(model);
+        } catch (NoSuchFieldException ex) {
+            Logger.printError(this.getClass().getName(), "productScreen", ex);
+        }
     }
 
     public void categoryScreen() {

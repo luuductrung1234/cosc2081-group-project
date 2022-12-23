@@ -27,6 +27,7 @@ import java.util.Optional;
  */
 public class AuthService {
     private final AccountRepository accountRepository;
+//    I guess final should be all capital letters
     private Principal principal;    // logged-in user's principal/claims
 
     public AuthService(AccountRepository accountRepository) {

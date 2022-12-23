@@ -71,6 +71,7 @@ public class Helpers {
         }
     }
 
+
     public static <TClass, TField> void requestInput(Scanner scanner, String label, String fieldName, Function<String, TField> converter, TClass obj) throws NoSuchFieldException {
         boolean isValid = false;
         while (!isValid) {

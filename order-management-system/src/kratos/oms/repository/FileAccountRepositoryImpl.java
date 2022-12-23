@@ -31,7 +31,7 @@ public class FileAccountRepositoryImpl extends BaseFileRepository<UUID, Account>
 
     @Override
     public boolean add(Account account) {
-        var accounts = listAll();
+        List<Account> accounts = listAll();
         accounts.add(account);
         try {
             this.write(accounts);
