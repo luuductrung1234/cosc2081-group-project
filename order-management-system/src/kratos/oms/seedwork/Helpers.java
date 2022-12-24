@@ -72,6 +72,29 @@ public class Helpers {
     }
 
 
+    public static void requestSelectProduct(Scanner scanner, String label, List<InputOption<Runnable>> options) {
+        System.out.println();
+        if (options == null || options.size() == 0)
+            throw new IllegalArgumentException("options is required");
+        System.out.println(options.get(Integer.parseInt(scanner.nextLine())).getLabel());
+
+//        while (true) {
+//            System.out.print(label);
+//            try {
+//                int choice = Integer.parseInt(scanner.nextLine());
+//                if (choice < 0 || choice >= options.size()) {
+//                    Logger.printWarning("There is no option [%d]", choice);
+//                    continue;
+//                }
+//                options.get(choice).getAction().run();
+//                return;
+//            } catch (NumberFormatException e) {
+//                Logger.printWarning("Please enter a valid number!");
+//            }
+//        }
+    }
+
+
     public static <TClass, TField> void requestInput(Scanner scanner, String label, String fieldName, Function<String, TField> converter, TClass obj) throws NoSuchFieldException {
         boolean isValid = false;
         while (!isValid) {

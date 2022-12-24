@@ -13,10 +13,7 @@ package kratos.oms.service;
 
 import kratos.oms.domain.Category;
 import kratos.oms.domain.Role;
-import kratos.oms.model.CategoryModel;
-import kratos.oms.model.CreateAccountModel;
-import kratos.oms.model.LoginModel;
-import kratos.oms.model.ProductModel;
+import kratos.oms.model.*;
 import kratos.oms.repository.FileProductRepository;
 import kratos.oms.seedwork.Helpers;
 import kratos.oms.seedwork.InputOption;
@@ -31,12 +28,17 @@ public class MenuService {
     private final AuthService authService;
     private final CartService cartService;
     private final ProductService productService;
+    private final OrderService orderService;
 
-    public MenuService(AuthService authService, CartService cartService, ProductService productService) {
+    public MenuService(AuthService authService, CartService cartService, ProductService productService, OrderService orderService) {
         this.authService = authService;
         this.cartService = cartService;
         this.productService=productService;
+        this.orderService=orderService;
     }
+
+
+
 
     public void homeScreen() {
         while (true) {
@@ -93,6 +95,7 @@ public class MenuService {
         // TODO: implement
     }
 
+
     public void productScreen() {
         banner("products");
         ProductModel model = new ProductModel();
@@ -100,7 +103,7 @@ public class MenuService {
             Helpers.requestInput(scanner, "Enter Product Name: ", "name", model);
             Helpers.requestInput(scanner, "Enter Product From Price: ", "FromPrice", model);
             Helpers.requestInput(scanner, "Enter Product To Price: ", "ToPrice", model);
-            Helpers.requestSelect(scanner, "How would you like to sort the items [0-3]: ", new ArrayList<>() {{
+            Helpers.requestSelectProduct(scanner, "How would you like to sort the items [0-3]: ", new ArrayList<>() {{
                 add(new InputOption<>("[0] Price low to high", () -> model.setSortedBy("0")));
                 add(new InputOption<>("[1] Price high to low", () -> model.setSortedBy("1")));
                 add(new InputOption<>("[2] Alphabetically", () -> model.setSortedBy("2")));
@@ -144,12 +147,33 @@ public class MenuService {
 
     public void orderScreen() {
         banner("orders");
-        // TODO: implement
+        OrderModel model = new OrderModel();
+        try {
+            Helpers.requestInput(scanner, "Enter Order ID: ", "accountID", model);
+            Helpers.requestSelectProduct(scanner, "Select Order Statue [0-2]: ", new ArrayList<>() {{
+                add(new InputOption<>("[0] ordered", () -> model.setSortedBy("0")));
+                add(new InputOption<>("[1] delivering", () -> model.setSortedBy("1")));
+                add(new InputOption<>("[2] delivered", () -> model.setSortedBy("2")));
+            }});
+//            Helpers.requestSelectProduct(scanner, "How would you like to sort the items [0-1]: ", new ArrayList<>() {{
+//                add(new InputOption<>("[0] latest to oldest", () -> model.setSortedBy("0")));
+//                add(new InputOption<>("[1] oldest to latest", () -> model.setSortedBy("1")));
+//            }});
+
+        } catch (NoSuchFieldException ex) {
+            Logger.printError(this.getClass().getName(), "productScreen", ex);
+        }
     }
 
     public void orderDetailScreen() {
         banner("order");
-        // TODO: implement
+        OrderModel model = new OrderModel();
+        try {
+            Helpers.requestInput(scanner, "Enter Order ID: ", "accountID", model);
+            orderService.orderDetail(model);
+        } catch (NoSuchFieldException ex) {
+            Logger.printError(this.getClass().getName(), "orderScreen", ex);
+        }
     }
 
     public void customerScreen() {

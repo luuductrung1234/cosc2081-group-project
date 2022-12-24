@@ -11,4 +11,7 @@ public interface OrderRepository {
     List<Order> listAll(UUID accountId, OrderStatus status, String sortedBy);
     Optional<Order> findById(UUID id);
     boolean add(Order order);
+    boolean update(Order order);
+    boolean delete(Order order);
+//    can I add update and delete here?
 }

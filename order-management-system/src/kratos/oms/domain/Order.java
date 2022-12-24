@@ -24,6 +24,16 @@ public class Order extends Domain<UUID> {
     private Instant paidOn;
     private String completedBy;
     private Instant completedOn;
+    private int orderDate;
+//    can I add orderdate? I think it will be needed for sorting orders
+
+    public int getOrderDate() {
+        return orderDate;
+    }
+
+    public void setOrderDate(int orderDate) {
+        this.orderDate = orderDate;
+    }
 
     public Order(UUID id, UUID accountId, List<OrderItem> items, double discount) {
         super(id);

@@ -19,11 +19,7 @@ public class FileProductRepository extends BaseFileRepository implements Product
     public List<Product> listAll(String name, Category category, double fromPrice, double toPrice) {
         try {
             ArrayList<Product> products=new ArrayList<>(this.read(Product.class));
-            for(int i=0; i<products.size();i++){
-                if(products.get(i).getCategory().equals("1")){
 
-                }
-            }
             products.stream()
                     .filter(a -> a.getName().contains(name))
                     .filter(Objects::nonNull).collect(Collectors.toList());
@@ -50,7 +46,7 @@ public class FileProductRepository extends BaseFileRepository implements Product
 
     @Override
     public Optional<Product> findById(UUID id) {
-        return listAll().stream().filter(a -> a.getName().equals(id)).findFirst();
+        return listAll().stream().filter(a -> a.getId().equals(id)).findFirst();
     }
 
     @Override
