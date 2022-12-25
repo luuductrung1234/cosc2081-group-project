@@ -12,6 +12,7 @@ package kratos.oms.domain;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -24,16 +25,12 @@ public class Order extends Domain<UUID> {
     private Instant paidOn;
     private String completedBy;
     private Instant completedOn;
-    private int orderDate;
-//    can I add orderdate? I think it will be needed for sorting orders
+    private String orderDate;
 
-    public int getOrderDate() {
-        return orderDate;
-    }
 
-    public void setOrderDate(int orderDate) {
-        this.orderDate = orderDate;
-    }
+//    can I add orderDate? I think it will be necessary for sorting orders
+
+
 
     public Order(UUID id, UUID accountId, List<OrderItem> items, double discount) {
         super(id);
@@ -49,6 +46,13 @@ public class Order extends Domain<UUID> {
 
     public Order(UUID accountId, double discount) {
         this(UUID.randomUUID(), accountId, new ArrayList<>(), discount);
+    }
+    public String getOrderDate() {
+        return orderDate;
+    }
+
+    public void setOrderDate(String orderDate) {
+        this.orderDate = orderDate;
     }
 
     public void addItem(OrderItem item) {

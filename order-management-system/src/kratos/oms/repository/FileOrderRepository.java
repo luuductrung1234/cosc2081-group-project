@@ -1,5 +1,6 @@
 package kratos.oms.repository;
 
+import kratos.oms.domain.Cart;
 import kratos.oms.domain.Order;
 import kratos.oms.domain.OrderStatus;
 import kratos.oms.domain.Product;

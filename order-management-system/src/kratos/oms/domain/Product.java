@@ -25,6 +25,7 @@ public class Product extends Domain<UUID> {
         this.currency = currency;
         this.category = category;
     }
+//    we have fixed currency for this problem. can we set the currency here?
 
     public Product(String name, double price, String currency, Category category) {
         this(UUID.randomUUID(), name, price, currency, category);

@@ -81,6 +81,7 @@ public class MenuService {
                         add(new InputOption<>("check membership", () -> {
                             System.out.printf("Your membership is: %s%n", authService.getPrincipal().getMembership());
                         }));
+//                        I think membership should be located under the profile? like product detail goes under the product
                         addAll(commonOptions);
                     }});
                     break;
@@ -129,7 +130,7 @@ public class MenuService {
         ProductModel model = new ProductModel();
         try {
             Helpers.requestInput(scanner, "Enter Product ID: ", "productID", model);
-            productService.productDetail(model);
+            productService.showProductDetail(model);
         } catch (NoSuchFieldException ex) {
             Logger.printError(this.getClass().getName(), "productScreen", ex);
         }
@@ -170,7 +171,7 @@ public class MenuService {
         OrderModel model = new OrderModel();
         try {
             Helpers.requestInput(scanner, "Enter Order ID: ", "accountID", model);
-            orderService.orderDetail(model);
+            orderService.showOrderDetail(model);
         } catch (NoSuchFieldException ex) {
             Logger.printError(this.getClass().getName(), "orderScreen", ex);
         }
@@ -229,6 +230,7 @@ public class MenuService {
             Logger.printError(this.getClass().getName(), "registrationScreen", e);
         }
     }
+
 
     public void exitScreen() {
         cartService.save();

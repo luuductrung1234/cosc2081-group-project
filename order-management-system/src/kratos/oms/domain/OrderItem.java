@@ -17,15 +17,25 @@ public class OrderItem extends Domain<UUID> {
     private UUID productId;
     private int quantity;
 
-    public OrderItem(UUID id, UUID orderId, UUID productId, int quantity) {
+//    public OrderItem(UUID id, UUID orderId, UUID productId, int quantity) {
+//        super(id);
+//        this.orderId = orderId;
+//        this.productId = productId;
+//        this.quantity = quantity;
+//    }
+//
+//    public OrderItem(UUID orderId, UUID productId, int quantity) {
+//        this(UUID.randomUUID(), orderId, productId, quantity);
+//    }
+
+    public OrderItem(UUID id,  UUID productId, int quantity) {
         super(id);
-        this.orderId = orderId;
         this.productId = productId;
         this.quantity = quantity;
     }
 
-    public OrderItem(UUID orderId, UUID productId, int quantity) {
-        this(UUID.randomUUID(), orderId, productId, quantity);
+    public OrderItem( UUID productId, int quantity) {
+        this(UUID.randomUUID(), productId, quantity);
     }
 
     @Override

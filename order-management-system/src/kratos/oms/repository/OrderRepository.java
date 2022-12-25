@@ -9,6 +9,7 @@ import java.util.UUID;
 
 public interface OrderRepository {
     List<Order> listAll(UUID accountId, OrderStatus status, String sortedBy);
+    List<Order> listAll();
     Optional<Order> findById(UUID id);
     boolean add(Order order);
     boolean update(Order order);

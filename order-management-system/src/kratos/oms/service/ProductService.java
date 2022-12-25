@@ -1,5 +1,7 @@
 package kratos.oms.service;
 
+import kratos.oms.domain.CartItem;
+import kratos.oms.domain.Category;
 import kratos.oms.domain.Product;
 import kratos.oms.model.ProductModel;
 import kratos.oms.repository.ProductRepository;
@@ -9,7 +11,7 @@ import java.util.*;
 public class ProductService {
     private final ProductRepository productRepository;
     private Optional<Product> productDetail;
-
+    private List <Product> products;
     public ProductService(ProductRepository productRepository) {
         this.productRepository = productRepository;
     }
@@ -30,10 +32,42 @@ public class ProductService {
         }
         return products;
     }
-    public Optional<Product> productDetail(ProductModel model ){
+    public Optional<Product> showProductDetail(ProductModel model ){
         productDetail=productRepository.findById(model.getProductID());
         return productDetail;
     }
+
+    public boolean addItem(String name, double price, Category category){
+        load();
+        Optional<Product> productOpt = products.stream().filter( item -> item.getId().equals(name)).findFirst();
+        if(productOpt.isEmpty()){
+            productRepository.add(new Product(name, price,"vnd", category));
+            return true;
+        }
+        return false;
+    }
+    public boolean updateItem(String name, double price){
+        load();
+        Optional <Product> productOpt =products.stream().filter(item -> item.getName().equals(name)).findFirst();
+        if(productOpt==null){
+            return false;
+        }
+        productRepository.update(name,price);
+        return true;
+    }
+    public boolean removeItem(String name){
+        load();
+        Optional <Product> productOpt = products.stream().filter(item->item.getName().equals(name)).findFirst();
+        if(productOpt!=null){
+            productRepository.delete(name);
+            return true;
+        }return false;
+    }
+    public void load(){
+        products=productRepository.listAll();
+    }
+
+
 
 
 }

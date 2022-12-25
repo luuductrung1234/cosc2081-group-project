@@ -61,11 +61,23 @@ public class FileProductRepository extends BaseFileRepository implements Product
             return false;
         }
     }
+    public boolean update(String name, double price){
+        List<Product> products = listAll();
+        products.removeIf(a -> a.getId().equals(name));
+        products.add(new Product(name, price,"vnd",products.stream().filter(item -> item.getName().equals(name)).findFirst().get().getCategory()));
+        try{
+            this.write(products);
+            return true;
+        }catch (IOException e){
+            Logger.printError(this.getClass().getName(),"update",e);
+            return false;
+        }
+    }
 
     @Override
-    public boolean delete(UUID id) {
+    public boolean delete(String name) {
         List<Product> products = listAll();
-        products.removeIf(a -> a.getId().equals(id));
+        products.removeIf(a -> a.getName().equals(name));
         try {
             this.write(products);
             return true;
