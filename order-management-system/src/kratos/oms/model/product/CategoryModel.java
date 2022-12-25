@@ -1,4 +1,4 @@
-package kratos.oms.model;
+package kratos.oms.model.product;
 
 import kratos.oms.domain.Category;
 

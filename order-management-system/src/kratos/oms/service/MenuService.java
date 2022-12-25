@@ -11,10 +11,10 @@
 
 package kratos.oms.service;
 
-import kratos.oms.domain.Category;
 import kratos.oms.domain.Role;
-import kratos.oms.model.*;
-import kratos.oms.repository.FileProductRepository;
+import kratos.oms.model.account.CreateAccountModel;
+import kratos.oms.model.account.LoginModel;
+import kratos.oms.model.order.SearchOrderModel;
 import kratos.oms.seedwork.Helpers;
 import kratos.oms.seedwork.InputOption;
 import kratos.oms.seedwork.Logger;
@@ -33,12 +33,9 @@ public class MenuService {
     public MenuService(AuthService authService, CartService cartService, ProductService productService, OrderService orderService) {
         this.authService = authService;
         this.cartService = cartService;
-        this.productService=productService;
-        this.orderService=orderService;
+        this.productService = productService;
+        this.orderService = orderService;
     }
-
-
-
 
     public void homeScreen() {
         while (true) {
@@ -95,44 +92,15 @@ public class MenuService {
         // TODO: implement
     }
 
-
     public void productScreen() {
         banner("products");
-        ProductModel model = new ProductModel();
-        try {
-            Helpers.requestInput(scanner, "Enter Product Name: ", "name", model);
-            Helpers.requestInput(scanner, "Enter Product From Price: ", "FromPrice", model);
-            Helpers.requestInput(scanner, "Enter Product To Price: ", "ToPrice", model);
-            Helpers.requestSelectProduct(scanner, "How would you like to sort the items [0-3]: ", new ArrayList<>() {{
-                add(new InputOption<>("[0] Price low to high", () -> model.setSortedBy("0")));
-                add(new InputOption<>("[1] Price high to low", () -> model.setSortedBy("1")));
-                add(new InputOption<>("[2] Alphabetically", () -> model.setSortedBy("2")));
-                add(new InputOption<>("[3] Inverse Alphabet",  () -> model.setSortedBy("3")));
-            }});
-//            Helpers.requestSelect(scanner, "Choose the category [0-3]: ", new ArrayList<>() {{
-//                add(new InputOption<>("[0] Category1", () -> model.setCategory(Category)));
-//                add(new InputOption<>("[1] Category2", () -> model.setCategory("1")));
-//                add(new InputOption<>("[2] Category3", () -> model.setCategory("2")));
-//                add(new InputOption<>("[3] Category4", () -> model.setCategory("3")));
-//            }});
-            productService.search(model);
-
-            } catch (NoSuchFieldException ex) {
-            Logger.printError(this.getClass().getName(), "productScreen", ex);
-        }
-
-        }
+        // TODO: implement
+    }
 
 
     public void productDetailScreen() {
         banner("product");
-        ProductModel model = new ProductModel();
-        try {
-            Helpers.requestInput(scanner, "Enter Product ID: ", "productID", model);
-            productService.productDetail(model);
-        } catch (NoSuchFieldException ex) {
-            Logger.printError(this.getClass().getName(), "productScreen", ex);
-        }
+        // TODO: implement
     }
 
     public void categoryScreen() {
@@ -147,7 +115,7 @@ public class MenuService {
 
     public void orderScreen() {
         banner("orders");
-        OrderModel model = new OrderModel();
+        SearchOrderModel model = new SearchOrderModel();
         try {
             Helpers.requestInput(scanner, "Enter Order ID: ", "accountID", model);
             Helpers.requestSelectProduct(scanner, "Select Order Statue [0-2]: ", new ArrayList<>() {{
@@ -167,7 +135,7 @@ public class MenuService {
 
     public void orderDetailScreen() {
         banner("order");
-        OrderModel model = new OrderModel();
+        SearchOrderModel model = new SearchOrderModel();
         try {
             Helpers.requestInput(scanner, "Enter Order ID: ", "accountID", model);
             orderService.orderDetail(model);
@@ -198,7 +166,7 @@ public class MenuService {
             try {
                 Helpers.requestInput(scanner, "Enter your username: ", "username", model);
                 Helpers.requestInput(scanner, "Enter your password: ", "password", model);
-                if(authService.login(model)){
+                if (authService.login(model)) {
                     cartService.load();
                     return true;
                 }
@@ -218,7 +186,7 @@ public class MenuService {
             Helpers.requestInput(scanner, "Enter your username: ", "username", model);
             Helpers.requestInput(scanner, "Enter your password: ", "password", model);
             Helpers.requestInput(scanner, "Enter your full name: ", "fullName", model);
-            if(role == Role.CUSTOMER) {
+            if (role == Role.CUSTOMER) {
                 Helpers.requestInput(scanner, "Enter your phone: ", "phone", model);
                 Helpers.requestInput(scanner, "Enter your email: ", "email", model);
                 Helpers.requestInput(scanner, "Enter your address: ", "address", model);

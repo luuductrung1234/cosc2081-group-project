@@ -14,14 +14,16 @@ import kratos.oms.repository.*;
 import kratos.oms.service.*;
 
 public class Main {
+    private final static String DATA_DIRECTORY = "data";
+
     /**
      * Entry point of Order-Management-System program
      */
     public static void main(String[] args) {
-        AccountRepository accountRepository = new FileAccountRepositoryImpl("data/accounts.txt");
-        CartRepository cartRepository = new FileCartRepositoryImpl("data/carts.txt");
-        ProductRepository productRepository=new FileProductRepository("data/products.txt");
-        OrderRepository orderRepository=new FileOrderRepository("data/orders.txt");
+        AccountRepository accountRepository = new FileAccountRepositoryImpl(DATA_DIRECTORY);
+        CartRepository cartRepository = new FileCartRepositoryImpl(DATA_DIRECTORY);
+        ProductRepository productRepository=new FileProductRepository(DATA_DIRECTORY);
+        OrderRepository orderRepository=new FileOrderRepository(DATA_DIRECTORY);
         AuthService authService = new AuthService(accountRepository);
         CartService cartService = new CartService(authService, cartRepository);
         ProductService productService=new ProductService(productRepository);

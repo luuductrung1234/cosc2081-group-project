@@ -1,7 +1,5 @@
 package kratos.oms.seedwork;
 
-import kratos.oms.model.ProductModel;
-
 public class InputOption<T> {
     private String label;
     private T action;

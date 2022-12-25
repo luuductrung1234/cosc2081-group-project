@@ -1,10 +1,10 @@
-package kratos.oms.model;
+package kratos.oms.model.product;
 
 import kratos.oms.domain.Category;
 
 import java.util.UUID;
 
-public class ProductModel {
+public class SearchProductModel {
     public UUID getProductID() {
         return productID;
     }

@@ -10,8 +10,10 @@ import java.util.Optional;
 import java.util.UUID;
 
 public class FileCartRepositoryImpl extends BaseFileRepository<UUID, Cart> implements CartRepository {
-    public FileCartRepositoryImpl(String fileUrl) {
-        super(fileUrl);
+    private final static String DATA_FILE_NAME = "carts.txt.";
+
+    public FileCartRepositoryImpl(String directoryUrl) {
+        super(directoryUrl, DATA_FILE_NAME);
     }
 
     @Override

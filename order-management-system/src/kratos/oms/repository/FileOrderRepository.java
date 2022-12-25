@@ -2,16 +2,17 @@ package kratos.oms.repository;
 
 import kratos.oms.domain.Order;
 import kratos.oms.domain.OrderStatus;
-import kratos.oms.domain.Product;
 import kratos.oms.seedwork.Logger;
 
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class FileOrderRepository extends BaseFileRepository implements OrderRepository{
-    public FileOrderRepository(String fileUrl) {
-        super(fileUrl);
+public class FileOrderRepository extends BaseFileRepository<UUID, Order> implements OrderRepository{
+    private final static String DATA_FILE_NAME = "orders.txt";
+
+    public FileOrderRepository(String directoryUrl) {
+        super(directoryUrl, DATA_FILE_NAME);
     }
 
     @Override

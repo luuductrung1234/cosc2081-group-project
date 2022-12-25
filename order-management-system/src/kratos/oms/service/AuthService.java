@@ -12,8 +12,9 @@ package kratos.oms.service;
 
 import kratos.oms.domain.Account;
 import kratos.oms.domain.Profile;
-import kratos.oms.model.CreateAccountModel;
-import kratos.oms.model.LoginModel;
+import kratos.oms.domain.Role;
+import kratos.oms.model.account.CreateAccountModel;
+import kratos.oms.model.account.LoginModel;
 import kratos.oms.repository.AccountRepository;
 import kratos.oms.seedwork.Helpers;
 import kratos.oms.seedwork.Logger;
@@ -64,9 +65,7 @@ public class AuthService {
     }
 
     public boolean register(CreateAccountModel model) {
-        Profile profile = Helpers.isNullOrEmpty(model.getPhone())
-                && Helpers.isNullOrEmpty(model.getEmail())
-                && Helpers.isNullOrEmpty(model.getAddress())
+        Profile profile = model.getRole() == Role.ADMIN
                 ? null : new Profile(model.getPhone(), model.getEmail(), model.getAddress());
         try {
             Account account = new Account(model.getUsername(),

@@ -4,6 +4,7 @@ import kratos.oms.domain.Domain;
 import kratos.oms.seedwork.Helpers;
 import kratos.oms.seedwork.Logger;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -16,8 +17,8 @@ import java.util.stream.Collectors;
 public abstract class BaseFileRepository<TId, T extends Domain<TId>> {
     private final String fileUrl;
 
-    public BaseFileRepository(String fileUrl) {
-        this.fileUrl = fileUrl;
+    public BaseFileRepository(String directoryUrl, String fileName) {
+        this.fileUrl = directoryUrl + File.separator + fileName;
     }
 
     public List<T> read(Class<T> clazz) throws IOException {

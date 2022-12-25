@@ -10,8 +10,10 @@ import java.util.Optional;
 import java.util.UUID;
 
 public class FileAccountRepositoryImpl extends BaseFileRepository<UUID, Account> implements AccountRepository {
-    public FileAccountRepositoryImpl(String fileUrl) {
-        super(fileUrl);
+    private final static String DATA_FILE_NAME = "accounts.txt";
+
+    public FileAccountRepositoryImpl(String directoryUrl) {
+        super(directoryUrl, DATA_FILE_NAME);
     }
 
     @Override

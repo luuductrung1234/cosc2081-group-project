@@ -1,18 +1,18 @@
 package kratos.oms.repository;
 
-import kratos.oms.domain.Account;
 import kratos.oms.domain.Category;
 import kratos.oms.domain.Product;
-import kratos.oms.seedwork.Helpers;
 import kratos.oms.seedwork.Logger;
 
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class FileProductRepository extends BaseFileRepository implements ProductRepository {
-    public FileProductRepository(String fileUrl) {
-        super(fileUrl);
+public class FileProductRepository extends BaseFileRepository<UUID, Product> implements ProductRepository {
+    private final static String DATA_FILE_NAME = "products.txt";
+
+    public FileProductRepository(String directoryUrl) {
+        super(directoryUrl, DATA_FILE_NAME);
     }
 
     @Override
