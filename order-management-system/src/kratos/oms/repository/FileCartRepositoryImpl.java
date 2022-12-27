@@ -9,11 +9,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-public class FileCartRepositoryImpl extends BaseFileRepository<UUID, Cart> implements CartRepository {
+public class FileCartRepositoryImpl extends BaseFileRepository implements CartRepository {
     private final static String DATA_FILE_NAME = "carts.txt.";
 
     public FileCartRepositoryImpl(String directoryUrl) {
-        super(directoryUrl, DATA_FILE_NAME);
+        super(directoryUrl);
     }
 
     @Override
@@ -30,7 +30,7 @@ public class FileCartRepositoryImpl extends BaseFileRepository<UUID, Cart> imple
         }
         carts.add(cart);
         try {
-            this.write(carts);
+            this.write(DATA_FILE_NAME, carts);
             return true;
         } catch (IOException e) {
             Logger.printError(this.getClass().getName(), "addOrUpdate", e);
@@ -40,7 +40,7 @@ public class FileCartRepositoryImpl extends BaseFileRepository<UUID, Cart> imple
 
     private List<Cart> listAll() {
         try {
-            return new ArrayList<>(this.read(Cart.class));
+            return this.read(DATA_FILE_NAME, Cart.class);
         } catch (IOException e) {
             Logger.printError(this.getClass().getName(), "listAll", e);
             return new ArrayList<>();

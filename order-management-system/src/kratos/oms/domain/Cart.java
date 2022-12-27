@@ -1,5 +1,7 @@
 package kratos.oms.domain;
 
+import kratos.oms.seedwork.Helpers;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -32,26 +34,43 @@ public class Cart extends Domain<UUID> {
     }
 
     @Override
-    public String serialize() {return null;}
+    public String serialize() {
+        List<String> fields = new ArrayList<>() {{
+            add(id.toString());
+            add(accountId.toString());
+            add(String.valueOf(discount));
+        }};
+        return String.join(",", fields);
+    }
 
     /**
      * override static method Domain.deserialize
+     *
      * @param data serialized string data
      * @return new instance of Cart
      */
     public static Cart deserialize(String data) {
-        return null;
+        if (Helpers.isNullOrEmpty(data))
+            throw new IllegalArgumentException("data to deserialize should not be empty!");
+        String[] fields = data.split(",", 3);
+        return new Cart(UUID.fromString(fields[0]),
+                UUID.fromString(fields[1]),
+                Double.parseDouble(fields[2]));
+    }
+
+    public UUID getId() {
+        return id;
     }
 
     public UUID getAccountId() {
         return accountId;
     }
 
-    public List<CartItem> getItems() {
-        return items;
-    }
-
     public double getDiscount() {
         return discount;
+    }
+
+    public List<CartItem> getItems() {
+        return items;
     }
 }

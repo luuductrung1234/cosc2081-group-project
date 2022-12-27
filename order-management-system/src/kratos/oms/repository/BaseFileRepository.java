@@ -14,15 +14,23 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-public abstract class BaseFileRepository<TId, T extends Domain<TId>> {
-    private final String fileUrl;
+public abstract class BaseFileRepository {
+    private final String directoryUrl;
 
-    public BaseFileRepository(String directoryUrl, String fileName) {
-        this.fileUrl = directoryUrl + File.separator + fileName;
+    public BaseFileRepository(String directoryUrl) {
+        this.directoryUrl = directoryUrl;
     }
 
-    public List<T> read(Class<T> clazz) throws IOException {
-        Path path = Paths.get(fileUrl);
+    /**
+     * Read a list of domain objects (of type TDomain) from data file
+     *
+     * @param fileName data file name
+     * @param clazz Class object of type TDomain
+     * @return a list of domain objects (of type TDomain)
+     * @throws IOException data file could not be read
+     */
+    public <TDomain extends Domain> List<TDomain> read(String fileName, Class<TDomain> clazz) throws IOException {
+        Path path = Paths.get(this.directoryUrl + File.separator + fileName);
         if (!Files.isReadable(path))
             return new ArrayList<>();
         List<String> lines = Files.readAllLines(path);
@@ -32,23 +40,30 @@ public abstract class BaseFileRepository<TId, T extends Domain<TId>> {
                 .filter(Objects::nonNull).collect(Collectors.toList());
     }
 
-    @SuppressWarnings("unchecked")
-    private T lineDeserialize(String line, Class<T> clazz) {
-        try {
-            Method deserialize = clazz.getMethod("deserialize", String.class);
-            return (T) deserialize.invoke(null, line);
-        } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-            Logger.printError(this.getClass().getName(), "lineDeserialize", e);
-            return null;
-        }
-    }
-
-    public void write(List<T> records) throws IOException {
+    /**
+     * Write a list of domain objects (of type TDomain) to data file
+     *
+     * @param fileName data file name
+     * @param records a list of domain objects (of type TDomain)
+     * @throws IOException data file could not be written
+     */
+    public <TDomain extends Domain> void write(String fileName, List<TDomain> records) throws IOException {
         List<String> lines = records.stream()
                 .map(Domain::serialize)
                 .collect(Collectors.toList());
         String data = String.join("\n", lines);
-        Path path = Paths.get(fileUrl);
+        Path path = Paths.get(this.directoryUrl + File.separator + fileName);
         Files.write(path, data.getBytes(), StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+    }
+
+    @SuppressWarnings("unchecked")
+    private <TDomain extends Domain> TDomain lineDeserialize(String line, Class<TDomain> clazz) {
+        try {
+            Method deserialize = clazz.getMethod("deserialize", String.class);
+            return (TDomain) deserialize.invoke(null, line);
+        } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+            Logger.printError(this.getClass().getName(), "lineDeserialize", e);
+            return null;
+        }
     }
 }

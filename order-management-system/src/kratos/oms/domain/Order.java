@@ -10,6 +10,8 @@
 
 package kratos.oms.domain;
 
+import kratos.oms.seedwork.Helpers;
+
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,19 +22,27 @@ public class Order extends Domain<UUID> {
     private OrderStatus status;
     private List<OrderItem> items;
     private double discount;
+    private Instant orderDate;
     private String paidBy;
     private Instant paidOn;
     private String completedBy;
     private Instant completedOn;
-    private Instant orderDate;
 
-    public Order(UUID id, UUID accountId, List<OrderItem> items, double discount, Instant orderDate) {
-        super(id);
+    public Order(UUID uuid, UUID accountId, OrderStatus status, List<OrderItem> items, double discount, Instant orderDate, String paidBy, Instant paidOn, String completedBy, Instant completedOn) {
+        super(uuid);
         this.accountId = accountId;
-        this.orderDate = orderDate;
-        this.status = OrderStatus.CREATED;
+        this.status = status;
         this.items = items;
         this.discount = discount;
+        this.paidBy = paidBy;
+        this.paidOn = paidOn;
+        this.completedBy = completedBy;
+        this.completedOn = completedOn;
+        this.orderDate = orderDate;
+    }
+
+    public Order(UUID id, UUID accountId, List<OrderItem> items, double discount, Instant orderDate) {
+        this(id, accountId, OrderStatus.CREATED, items, discount, orderDate, null, null, null, null);
     }
 
     public Order(UUID accountId, List<OrderItem> items, double discount, Instant orderDate) {
@@ -65,16 +75,50 @@ public class Order extends Domain<UUID> {
 
     @Override
     public String serialize() {
-        return null;
+        List<String> fields = new ArrayList<>() {{
+            add(id.toString());
+            add(accountId.toString());
+            add(status.toString());
+            add(String.valueOf(discount));
+            add(orderDate.toString());
+            add(Helpers.isNullOrEmpty(paidBy) ? "" : paidBy);
+            add(paidOn == null ? "" : paidOn.toString());
+            add(Helpers.isNullOrEmpty(completedBy) ? "" : completedBy);
+            add(completedOn == null ? "" : completedOn.toString());
+        }};
+        return String.join(",", fields);
     }
 
     /**
      * override static method Domain.deserialize
+     *
      * @param data serialized string data
-     * @return new instance of Account
+     * @return new instance of Order
      */
-    public static Account deserialize(String data) {
-        return null;
+    public static Order deserialize(String data) {
+        if (Helpers.isNullOrEmpty(data))
+            throw new IllegalArgumentException("data to deserialize should not be empty!");
+        String[] fields = data.split(",", 9);
+        String paidBy = null;
+        Instant paidOn = null;
+        String completedBy = null;
+        Instant completedOn = null;
+        if (!Helpers.isNullOrEmpty(fields[5]) && !Helpers.isNullOrEmpty(fields[6])) {
+            paidBy = fields[5];
+            paidOn = Instant.parse(fields[6]);
+        }
+        if (!Helpers.isNullOrEmpty(fields[7]) && !Helpers.isNullOrEmpty(fields[8])) {
+            completedBy = fields[7];
+            completedOn = Instant.parse(fields[8]);
+        }
+        return new Order(UUID.fromString(fields[0]),
+                UUID.fromString(fields[1]),
+                OrderStatus.valueOf(fields[2]),
+                new ArrayList<>(),
+                Double.parseDouble(fields[3]),
+                Instant.parse(fields[4]),
+                paidBy, paidOn,
+                completedBy, completedOn);
     }
 
     public UUID getId() {

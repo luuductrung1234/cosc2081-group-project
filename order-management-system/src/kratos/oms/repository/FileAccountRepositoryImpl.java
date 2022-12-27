@@ -7,19 +7,18 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
-public class FileAccountRepositoryImpl extends BaseFileRepository<UUID, Account> implements AccountRepository {
+public class FileAccountRepositoryImpl extends BaseFileRepository implements AccountRepository {
     private final static String DATA_FILE_NAME = "accounts.txt";
 
     public FileAccountRepositoryImpl(String directoryUrl) {
-        super(directoryUrl, DATA_FILE_NAME);
+        super(directoryUrl);
     }
 
     @Override
     public List<Account> listAll() {
         try {
-            return new ArrayList<>(this.read(Account.class));
+            return this.read(DATA_FILE_NAME, Account.class);
         } catch (IOException e) {
             Logger.printError(this.getClass().getName(), "listAll", e);
             return new ArrayList<>();
@@ -36,7 +35,7 @@ public class FileAccountRepositoryImpl extends BaseFileRepository<UUID, Account>
         List<Account> accounts = listAll();
         accounts.add(account);
         try {
-            this.write(accounts);
+            this.write(DATA_FILE_NAME, accounts);
             return true;
         } catch (IOException e) {
             Logger.printError(this.getClass().getName(), "add", e);
@@ -50,7 +49,7 @@ public class FileAccountRepositoryImpl extends BaseFileRepository<UUID, Account>
         accounts.removeIf(a -> a.getId().equals(account.getId()));
         accounts.add(account);
         try {
-            this.write(accounts);
+            this.write(DATA_FILE_NAME, accounts);
             return true;
         } catch (IOException e) {
             Logger.printError(this.getClass().getName(), "update", e);

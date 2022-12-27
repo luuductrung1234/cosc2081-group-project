@@ -5,39 +5,26 @@ import kratos.oms.domain.Product;
 import kratos.oms.seedwork.Logger;
 
 import java.io.IOException;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
-public class FileProductRepository extends BaseFileRepository<UUID, Product> implements ProductRepository {
+public class FileProductRepository extends BaseFileRepository implements ProductRepository {
     private final static String DATA_FILE_NAME = "products.txt";
 
     public FileProductRepository(String directoryUrl) {
-        super(directoryUrl, DATA_FILE_NAME);
+        super(directoryUrl);
     }
 
     @Override
     public List<Product> listAll(String name, Category category, double fromPrice, double toPrice) {
-        try {
-            ArrayList<Product> products=new ArrayList<>(this.read(Product.class));
-
-            products.stream()
-                    .filter(a -> a.getName().contains(name))
-                    .filter(Objects::nonNull).collect(Collectors.toList());
-            products.stream()
-                    .filter(a -> a.getPrice()>=fromPrice)
-                    .filter(Objects::nonNull).collect(Collectors.toList());
-            products.stream()
-                    .filter(a -> a.getPrice()<=toPrice)
-                    .filter(Objects::nonNull).collect(Collectors.toList());
-            return products;
-        } catch (IOException e) {
-            Logger.printError(this.getClass().getName(), "listAll", e);
-            return new ArrayList<>();
-        }
+        return new ArrayList<>();
     }
+
     public List<Product> listAll() {
         try {
-            return new ArrayList<>(this.read(Product.class));
+            return this.read(DATA_FILE_NAME, Product.class);
         } catch (IOException e) {
             Logger.printError(this.getClass().getName(), "listAll", e);
             return new ArrayList<>();
@@ -54,7 +41,7 @@ public class FileProductRepository extends BaseFileRepository<UUID, Product> imp
         List<Product> products = listAll();
         products.add(product);
         try {
-            this.write(products);
+            this.write(DATA_FILE_NAME, products);
             return true;
         } catch (IOException e) {
             Logger.printError(this.getClass().getName(), "add", e);
@@ -65,13 +52,14 @@ public class FileProductRepository extends BaseFileRepository<UUID, Product> imp
     @Override
     public boolean delete(UUID id) {
         List<Product> products = listAll();
-        products.removeIf(a -> a.getId().equals(id));
         try {
-            this.write(products);
-            return true;
+            if (products.removeIf(a -> a.getId().equals(id))) {
+                this.write(DATA_FILE_NAME, products);
+                return true;
+            }
         } catch (IOException e) {
             Logger.printError(this.getClass().getName(), "update", e);
-            return false;
         }
+        return false;
     }
 }
