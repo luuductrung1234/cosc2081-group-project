@@ -14,9 +14,8 @@ package kratos.oms.service;
 import kratos.oms.domain.Role;
 import kratos.oms.model.account.CreateAccountModel;
 import kratos.oms.model.account.LoginModel;
-import kratos.oms.model.order.SearchOrderModel;
 import kratos.oms.seedwork.Helpers;
-import kratos.oms.seedwork.InputOption;
+import kratos.oms.seedwork.ActionOption;
 import kratos.oms.seedwork.Logger;
 
 import java.util.ArrayList;
@@ -40,42 +39,43 @@ public class MenuService {
     public void homeScreen() {
         while (true) {
             if (!authService.isAuthenticated()) {
-                Helpers.requestSelect(scanner, "Your choice [0-3]: ", new ArrayList<>() {{
-                    add(new InputOption<>("login", () -> loginScreen()));
-                    add(new InputOption<>("register as customer", () -> registrationScreen(Role.CUSTOMER)));
-                    add(new InputOption<>("register as admin", () -> registrationScreen(Role.ADMIN)));
-                    add(new InputOption<>("exit", () -> exitScreen()));
+                Helpers.requestSelectAction(scanner, "Your choice [0-3]: ", new ArrayList<>() {{
+                    add(new ActionOption<>("login", () -> loginScreen()));
+                    add(new ActionOption<>("register as customer", () -> registrationScreen(Role.CUSTOMER)));
+                    add(new ActionOption<>("register as admin", () -> registrationScreen(Role.ADMIN)));
+                    add(new ActionOption<>("exit", () -> exitScreen()));
                 }});
                 continue;
             }
             banner("home");
             Logger.printInfo("Welcome back %s! checkout what we can help you...", authService.getPrincipal().getUsername());
-            List<InputOption<Runnable>> commonOptions = new ArrayList<>() {{
-                add(new InputOption<>("profile", () -> profileScreen()));
-                add(new InputOption<>("logout", () -> {
+            List<ActionOption<Runnable>> commonOptions = new ArrayList<>() {{
+                add(new ActionOption<>("profile", () -> profileScreen()));
+                add(new ActionOption<>("logout", () -> {
                     authService.logout();
                     cartService.save();
+                    System.out.println();
                     Logger.printSuccess("Logout successfully.");
                 }));
-                add(new InputOption<>("exit", () -> exitScreen()));
+                add(new ActionOption<>("exit", () -> exitScreen()));
             }};
             switch (authService.getPrincipal().getRole()) {
                 case ADMIN:
-                    Helpers.requestSelect(scanner, "Your choice [0-7]: ", new ArrayList<>() {{
-                        add(new InputOption<>("statistic", () -> statisticScreen()));
-                        add(new InputOption<>("order list", () -> orderScreen()));
-                        add(new InputOption<>("product list", () -> productScreen()));
-                        add(new InputOption<>("category list", () -> categoryScreen()));
-                        add(new InputOption<>("customer list", () -> customerScreen()));
+                    Helpers.requestSelectAction(scanner, "Your choice [0-7]: ", new ArrayList<>() {{
+                        add(new ActionOption<>("statistic", () -> statisticScreen()));
+                        add(new ActionOption<>("order list", () -> orderScreen()));
+                        add(new ActionOption<>("product list", () -> productScreen()));
+                        add(new ActionOption<>("category list", () -> categoryScreen()));
+                        add(new ActionOption<>("customer list", () -> customerScreen()));
                         addAll(commonOptions);
                     }});
                     break;
                 case CUSTOMER:
                     Logger.printInfo("You have %d item(s) in cart", cartService.getCachedCart().getTotalCount());
-                    Helpers.requestSelect(scanner, "Your choice [0-1]: ", new ArrayList<>() {{
-                        add(new InputOption<>("product list", () -> productScreen()));
-                        add(new InputOption<>("order list", () -> orderScreen()));
-                        add(new InputOption<>("check membership", () -> {
+                    Helpers.requestSelectAction(scanner, "Your choice [0-1]: ", new ArrayList<>() {{
+                        add(new ActionOption<>("product list", () -> productScreen()));
+                        add(new ActionOption<>("order list", () -> orderScreen()));
+                        add(new ActionOption<>("check membership", () -> {
                             System.out.printf("Your membership is: %s%n", authService.getPrincipal().getMembership());
                         }));
                         addAll(commonOptions);
@@ -97,7 +97,6 @@ public class MenuService {
         // TODO: implement
     }
 
-
     public void productDetailScreen() {
         banner("product");
         // TODO: implement
@@ -115,33 +114,12 @@ public class MenuService {
 
     public void orderScreen() {
         banner("orders");
-        SearchOrderModel model = new SearchOrderModel();
-        try {
-            Helpers.requestInput(scanner, "Enter Order ID: ", "accountID", model);
-            Helpers.requestSelectProduct(scanner, "Select Order Statue [0-2]: ", new ArrayList<>() {{
-                add(new InputOption<>("[0] ordered", () -> model.setSortedBy("0")));
-                add(new InputOption<>("[1] delivering", () -> model.setSortedBy("1")));
-                add(new InputOption<>("[2] delivered", () -> model.setSortedBy("2")));
-            }});
-//            Helpers.requestSelectProduct(scanner, "How would you like to sort the items [0-1]: ", new ArrayList<>() {{
-//                add(new InputOption<>("[0] latest to oldest", () -> model.setSortedBy("0")));
-//                add(new InputOption<>("[1] oldest to latest", () -> model.setSortedBy("1")));
-//            }});
-
-        } catch (NoSuchFieldException ex) {
-            Logger.printError(this.getClass().getName(), "productScreen", ex);
-        }
+        // TODO: implement
     }
 
     public void orderDetailScreen() {
         banner("order");
-        SearchOrderModel model = new SearchOrderModel();
-        try {
-            Helpers.requestInput(scanner, "Enter Order ID: ", "accountID", model);
-            orderService.orderDetail(model);
-        } catch (NoSuchFieldException ex) {
-            Logger.printError(this.getClass().getName(), "orderScreen", ex);
-        }
+        // TODO: implement
     }
 
     public void customerScreen() {
@@ -200,7 +178,8 @@ public class MenuService {
 
     public void exitScreen() {
         cartService.save();
-        System.out.println("Goodbye! See you again.");
+        System.out.println();
+        Logger.printInfo("Goodbye! See you again.");
         System.exit(0);
     }
 

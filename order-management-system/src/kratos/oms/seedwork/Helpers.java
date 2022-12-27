@@ -48,7 +48,7 @@ public class Helpers {
         }
     }
 
-    public static void requestSelect(Scanner scanner, String label, List<InputOption<Runnable>> options) {
+    public static <TOption extends InputOption> TOption requestSelect(Scanner scanner, String label, List<TOption> options) {
         System.out.println();
         if (options == null || options.size() == 0)
             throw new IllegalArgumentException("options is required");
@@ -63,37 +63,22 @@ public class Helpers {
                     Logger.printWarning("There is no option [%d]", choice);
                     continue;
                 }
-                options.get(choice).getAction().run();
-                return;
+                return options.get(choice);
             } catch (NumberFormatException e) {
                 Logger.printWarning("Please enter a valid number!");
             }
         }
     }
 
-
-    public static void requestSelectProduct(Scanner scanner, String label, List<InputOption<Runnable>> options) {
-        System.out.println();
-        if (options == null || options.size() == 0)
-            throw new IllegalArgumentException("options is required");
-        System.out.println(options.get(Integer.parseInt(scanner.nextLine())).getLabel());
-
-//        while (true) {
-//            System.out.print(label);
-//            try {
-//                int choice = Integer.parseInt(scanner.nextLine());
-//                if (choice < 0 || choice >= options.size()) {
-//                    Logger.printWarning("There is no option [%d]", choice);
-//                    continue;
-//                }
-//                options.get(choice).getAction().run();
-//                return;
-//            } catch (NumberFormatException e) {
-//                Logger.printWarning("Please enter a valid number!");
-//            }
-//        }
+    public static <TAction extends Runnable> void requestSelectAction(Scanner scanner, String label, List<ActionOption<TAction>> options) {
+        var actionOpt = requestSelect(scanner, label, options);
+        actionOpt.getAction().run();
     }
 
+    public static <TValue> TValue requestSelectValue(Scanner scanner, String label, List<ValueOption<TValue>> options) {
+        var valueOpt = requestSelect(scanner, label, options);
+        return valueOpt.getValue();
+    }
 
     public static <TClass, TField> void requestInput(Scanner scanner, String label, String fieldName, Function<String, TField> converter, TClass obj) throws NoSuchFieldException {
         boolean isValid = false;
