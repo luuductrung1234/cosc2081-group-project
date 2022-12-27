@@ -10,6 +10,10 @@
 
 package kratos.oms.domain;
 
+import kratos.oms.seedwork.Helpers;
+
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 public class Product extends Domain<UUID> {
@@ -32,17 +36,32 @@ public class Product extends Domain<UUID> {
 
     @Override
     public String serialize() {
-        return null;
+        List<String> fields = new ArrayList<>() {{
+            add(id.toString());
+            add(name);
+            add(String.valueOf(price));
+            add(currency);
+            add(category.getId().toString());
+            add(category.getName());
+        }};
+        return String.join(",", fields);
     }
 
     /**
      * override static method Domain.deserialize
+     *
      * @param data serialized string data
-     * @return new instance of Account
+     * @return new instance of Product
      */
-    public static Account deserialize(String data) {
-
-        return null;
+    public static Product deserialize(String data) {
+        if (Helpers.isNullOrEmpty(data))
+            throw new IllegalArgumentException("data to deserialize should not be empty!");
+        String[] fields = data.split(",", 6);
+        return new Product(UUID.fromString(fields[0]),
+                fields[1],
+                Double.parseDouble(fields[2]),
+                fields[3],
+                new Category(UUID.fromString(fields[4]), fields[5]));
     }
 
     public UUID getId() {
@@ -67,7 +86,7 @@ public class Product extends Domain<UUID> {
 
     @Override
     public String toString() {
-        String category=(this.category==null)?"none":this.category.getName();
+        String category = (this.category == null) ? "none" : this.category.getName();
         return "Product{" +
                 "name='" + name + '\'' +
                 ", price=" + price +
