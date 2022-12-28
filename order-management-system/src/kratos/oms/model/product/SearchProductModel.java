@@ -1,23 +1,12 @@
 package kratos.oms.model.product;
 
-import kratos.oms.domain.Category;
-
 import java.util.UUID;
 
 public class SearchProductModel {
-    public UUID getProductID() {
-        return productID;
-    }
-
-    public void setProductID(UUID productID) {
-        this.productID = productID;
-    }
-
-    private UUID productID;
     private String name;
-    private Double priceFrom;
-    private Double priceTo;
-    private Category category;
+    private Double fromPrice;
+    private Double toPrice;
+    private UUID categoryId;
     private String sortedBy;
 
     public String getName() {
@@ -28,28 +17,20 @@ public class SearchProductModel {
         this.name = name;
     }
 
-    public Double getPriceFrom() {
-        return priceFrom;
+    public Double getFromPrice() {
+        return fromPrice;
     }
 
-    public void setPriceFrom(Double priceFrom) {
-        this.priceFrom = priceFrom;
+    public void setFromPrice(Double fromPrice) {
+        this.fromPrice = fromPrice;
     }
 
-    public Double getPriceTo() {
-        return priceTo;
+    public Double getToPrice() {
+        return toPrice;
     }
 
-    public void setPriceTo(Double priceTo) {
-        this.priceTo = priceTo;
-    }
-
-    public Category getCategory() {
-        return category;
-    }
-
-    public void setCategory(Category category) {
-        this.category = category;
+    public void setToPrice(Double toPrice) {
+        this.toPrice = toPrice;
     }
 
     public String getSortedBy() {
@@ -58,5 +39,13 @@ public class SearchProductModel {
 
     public void setSortedBy(String sortedBy) {
         this.sortedBy = sortedBy;
+    }
+
+    public UUID getCategoryId() {
+        return categoryId;
+    }
+
+    public void setCategoryId(UUID categoryId) {
+        this.categoryId = categoryId;
     }
 }

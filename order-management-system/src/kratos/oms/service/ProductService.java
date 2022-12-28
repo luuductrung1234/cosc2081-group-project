@@ -13,11 +13,11 @@ public class ProductService {
         this.productRepository = productRepository;
     }
 
-    public List<Product> search(SearchProductModel model) {
+    public List<Product> search(SearchProductModel searchModel) {
         return productRepository.listAll();
     }
 
-    public Optional<Product> productDetail(UUID productId) {
+    public Optional<Product> getDetail(UUID productId) {
         return productRepository.findById(productId);
     }
 }
