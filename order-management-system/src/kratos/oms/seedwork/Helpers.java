@@ -18,14 +18,15 @@ import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
-import java.util.Base64;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class Helpers {
+    public static UUID emptyUuid() {
+        return UUID.fromString("00000000-0000-0000-0000-000000000000");
+    }
+
     public static boolean isNullOrEmpty(String str) {
         return str == null || str.trim().isEmpty();
     }
@@ -38,7 +39,7 @@ public class Helpers {
 
     public static void loopRequest(Scanner scanner, Supplier<Boolean> action) {
         while (true) {
-            if(action.get())
+            if (action.get())
                 break;
             System.out.print("Do you want to retry? [y/n]: ");
             String answer = scanner.nextLine();
@@ -109,23 +110,23 @@ public class Helpers {
     }
 
     public static <TClass> void requestIntInput(Scanner scanner, String label, String fieldName, TClass obj) throws NoSuchFieldException {
-        requestInput(scanner, label, fieldName, Integer::parseInt, obj);
+        requestInput(scanner, label, fieldName, (value) -> Helpers.isNullOrEmpty(value) ? null : Integer.parseInt(value), obj);
     }
 
     public static <TClass> void requestLongInput(Scanner scanner, String label, String fieldName, TClass obj) throws NoSuchFieldException {
-        requestInput(scanner, label, fieldName, Long::parseLong, obj);
+        requestInput(scanner, label, fieldName, (value) -> Helpers.isNullOrEmpty(value) ? null : Long.parseLong(value), obj);
     }
 
     public static <TClass> void requestFloatInput(Scanner scanner, String label, String fieldName, TClass obj) throws NoSuchFieldException {
-        requestInput(scanner, label, fieldName, Float::parseFloat, obj);
+        requestInput(scanner, label, fieldName, (value) -> Helpers.isNullOrEmpty(value) ? null : Float.parseFloat(value), obj);
     }
 
     public static <TClass> void requestDoubleInput(Scanner scanner, String label, String fieldName, TClass obj) throws NoSuchFieldException {
-        requestInput(scanner, label, fieldName, Double::parseDouble, obj);
+        requestInput(scanner, label, fieldName, (value) -> Helpers.isNullOrEmpty(value) ? null : Double.parseDouble(value), obj);
     }
 
     public static <TClass> void requestBoolInput(Scanner scanner, String label, String fieldName, TClass obj) throws NoSuchFieldException {
-        requestInput(scanner, label, fieldName, Boolean::parseBoolean, obj);
+        requestInput(scanner, label, fieldName, (value) -> Helpers.isNullOrEmpty(value) ? null : Boolean.parseBoolean(value), obj);
     }
 
     public static <TClass, TField> ValidationResult validate(String fieldName, TField value, Class<TClass> clazz) throws NoSuchFieldException {
