@@ -1,6 +1,5 @@
 package kratos.oms.repository;
 
-import kratos.oms.domain.Category;
 import kratos.oms.domain.Product;
 import kratos.oms.seedwork.Logger;
 
@@ -10,16 +9,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-public class FileProductRepository extends BaseFileRepository implements ProductRepository {
+public class FileProductRepositoryImpl extends BaseFileRepository implements ProductRepository {
     private final static String DATA_FILE_NAME = "products.txt";
 
-    public FileProductRepository(String directoryUrl) {
+    public FileProductRepositoryImpl(String directoryUrl) {
         super(directoryUrl);
-    }
-
-    @Override
-    public List<Product> listAll(String name, Category category, double fromPrice, double toPrice) {
-        return new ArrayList<>();
     }
 
     public List<Product> listAll() {
@@ -39,12 +33,32 @@ public class FileProductRepository extends BaseFileRepository implements Product
     @Override
     public boolean add(Product product) {
         List<Product> products = listAll();
+        Optional<Product> existingProduct = findById(product.getId());
+        if (existingProduct.isPresent())
+            return false;
         products.add(product);
         try {
             this.write(DATA_FILE_NAME, products);
             return true;
         } catch (IOException e) {
             Logger.printError(this.getClass().getName(), "add", e);
+            return false;
+        }
+    }
+
+    @Override
+    public boolean update(Product product) {
+        List<Product> products = listAll();
+        Optional<Product> existingProduct = findById(product.getId());
+        if (existingProduct.isEmpty())
+            return false;
+        products.removeIf(p -> p.getId().equals(product.getId()));
+        products.add(product);
+        try {
+            this.write(DATA_FILE_NAME, products);
+            return true;
+        } catch (IOException e) {
+            Logger.printError(this.getClass().getName(), "update", e);
             return false;
         }
     }
@@ -58,7 +72,7 @@ public class FileProductRepository extends BaseFileRepository implements Product
                 return true;
             }
         } catch (IOException e) {
-            Logger.printError(this.getClass().getName(), "update", e);
+            Logger.printError(this.getClass().getName(), "delete", e);
         }
         return false;
     }

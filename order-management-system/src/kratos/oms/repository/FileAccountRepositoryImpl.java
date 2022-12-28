@@ -33,6 +33,11 @@ public class FileAccountRepositoryImpl extends BaseFileRepository implements Acc
     @Override
     public boolean add(Account account) {
         List<Account> accounts = listAll();
+        Optional<Account> existingAccount = accounts.stream()
+                .filter(a -> a.getId().equals(account.getId())
+                        || a.getUsername().equals(account.getUsername())).findFirst();
+        if (existingAccount.isPresent())
+            return false;
         accounts.add(account);
         try {
             this.write(DATA_FILE_NAME, accounts);
@@ -46,6 +51,10 @@ public class FileAccountRepositoryImpl extends BaseFileRepository implements Acc
     @Override
     public boolean update(Account account) {
         List<Account> accounts = listAll();
+        Optional<Account> existingAccount = accounts.stream()
+                .filter(a -> a.getId().equals(account.getId())).findFirst();
+        if (existingAccount.isEmpty())
+            return false;
         accounts.removeIf(a -> a.getId().equals(account.getId()));
         accounts.add(account);
         try {

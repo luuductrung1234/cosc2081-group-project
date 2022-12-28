@@ -20,15 +20,22 @@ public class Main {
      * Entry point of Order-Management-System program
      */
     public static void main(String[] args) {
+        // instantiate repositories
         AccountRepository accountRepository = new FileAccountRepositoryImpl(DATA_DIRECTORY);
         CartRepository cartRepository = new FileCartRepositoryImpl(DATA_DIRECTORY);
-        ProductRepository productRepository=new FileProductRepository(DATA_DIRECTORY);
-        OrderRepository orderRepository=new FileOrderRepository(DATA_DIRECTORY);
+        ProductRepository productRepository = new FileProductRepositoryImpl(DATA_DIRECTORY);
+        OrderRepository orderRepository = new FileOrderRepositoryImpl(DATA_DIRECTORY);
+        CategoryRepository categoryRepository = new FileCategoryRepositoryImpl(DATA_DIRECTORY);
+
+        // instantiate services
         AuthService authService = new AuthService(accountRepository);
         CartService cartService = new CartService(authService, cartRepository);
-        ProductService productService=new ProductService(productRepository);
-        OrderService orderService=new OrderService(orderRepository);
-        MenuService menuService = new MenuService(authService, cartService, productService, orderService);
+        ProductService productService = new ProductService(productRepository);
+        OrderService orderService = new OrderService(orderRepository);
+        CategoryService categoryService = new CategoryService(categoryRepository);
+        CustomerService customerService = new CustomerService(accountRepository);
+
+        MenuService menuService = new MenuService(authService, cartService, productService, orderService, categoryService, customerService);
         menuService.welcomeScreen();
     }
 
