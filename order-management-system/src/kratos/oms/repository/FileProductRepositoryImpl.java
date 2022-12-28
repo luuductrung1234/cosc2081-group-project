@@ -27,13 +27,14 @@ public class FileProductRepositoryImpl extends BaseFileRepository implements Pro
 
     @Override
     public Optional<Product> findById(UUID id) {
-        return listAll().stream().filter(a -> a.getId().equals(id)).findFirst();
+        return listAll().stream().filter(p -> p.getId().equals(id)).findFirst();
     }
 
     @Override
     public boolean add(Product product) {
         List<Product> products = listAll();
-        Optional<Product> existingProduct = findById(product.getId());
+        Optional<Product> existingProduct = products.stream()
+                .filter(p -> p.getId().equals(product.getId())).findFirst();
         if (existingProduct.isPresent())
             return false;
         products.add(product);
@@ -49,7 +50,8 @@ public class FileProductRepositoryImpl extends BaseFileRepository implements Pro
     @Override
     public boolean update(Product product) {
         List<Product> products = listAll();
-        Optional<Product> existingProduct = findById(product.getId());
+        Optional<Product> existingProduct = products.stream()
+                .filter(p -> p.getId().equals(product.getId())).findFirst();
         if (existingProduct.isEmpty())
             return false;
         products.removeIf(p -> p.getId().equals(product.getId()));

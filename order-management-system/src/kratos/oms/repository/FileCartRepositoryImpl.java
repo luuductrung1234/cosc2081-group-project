@@ -28,7 +28,8 @@ public class FileCartRepositoryImpl extends BaseFileRepository implements CartRe
     public boolean addOrUpdate(Cart cart) {
         List<Cart> carts = listAll();
         Optional<Cart> exitingCart = findByAccountId(cart.getAccountId());
-        exitingCart.ifPresent(this::delete);
+        if(exitingCart.isPresent())
+            carts.removeIf(c -> c.getAccountId().equals(cart.getAccountId()));
         carts.add(cart);
         List<CartItem> cartItems = carts.stream()
                 .flatMap(c -> c.getItems().stream()).collect(Collectors.toList());
@@ -56,18 +57,6 @@ public class FileCartRepositoryImpl extends BaseFileRepository implements CartRe
         } catch (IOException e) {
             Logger.printError(this.getClass().getName(), "listAll", e);
             return new ArrayList<>();
-        }
-    }
-
-    private void delete(Cart cart) {
-        try {
-            List<Cart> carts = this.read(DATA_FILE_NAME, Cart.class);
-            List<CartItem> items = this.read(DATA_ITEM_FILE_NAME, CartItem.class);
-            carts.removeIf(c -> c.getId().equals(cart.getId()));
-            List<UUID> cartItemIds = cart.getItems().stream().map(CartItem::getId).collect(Collectors.toList());
-            items.removeIf(i -> cartItemIds.contains(i.getId()));
-        } catch (IOException e) {
-            Logger.printError(this.getClass().getName(), "delete", e);
         }
     }
 }

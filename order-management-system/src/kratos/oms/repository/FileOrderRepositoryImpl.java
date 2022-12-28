@@ -19,6 +19,7 @@ public class FileOrderRepositoryImpl extends BaseFileRepository implements Order
         super(directoryUrl);
     }
 
+    @Override
     public List<Order> listAll() {
         try {
             List<Order> orders = this.read(DATA_FILE_NAME, Order.class);
@@ -38,13 +39,14 @@ public class FileOrderRepositoryImpl extends BaseFileRepository implements Order
 
     @Override
     public Optional<Order> findById(UUID id) {
-        return listAll().stream().filter(a -> a.getId().equals(id)).findFirst();
+        return listAll().stream().filter(o -> o.getId().equals(id)).findFirst();
     }
 
     @Override
     public boolean add(Order order) {
         List<Order> orders = listAll();
-        Optional<Order> existingOrder = findById(order.getId());
+        Optional<Order> existingOrder = orders.stream()
+                .filter(o -> o.getId().equals(order.getId())).findFirst();
         if (existingOrder.isPresent())
             return false;
         orders.add(order);
@@ -62,32 +64,36 @@ public class FileOrderRepositoryImpl extends BaseFileRepository implements Order
 
     @Override
     public boolean update(Order order) {
-        Optional<Order> existingOrder = findById(order.getId());
+        List<Order> orders = listAll();
+        Optional<Order> existingOrder = orders.stream()
+                .filter(o -> o.getId().equals(order.getId())).findFirst();
         if (existingOrder.isEmpty())
             return false;
-        if (delete(existingOrder.get()))
-            return add(order);
-        return false;
+        orders.removeIf(o -> o.getId().equals(order.getId()));
+        orders.add(order);
+        return writeOrders(orders);
     }
 
     @Override
     public boolean delete(UUID id) {
-        Optional<Order> existingOrder = findById(id);
+        List<Order> orders = listAll();
+        Optional<Order> existingOrder = orders.stream()
+                .filter(o -> o.getId().equals(id)).findFirst();
         if (existingOrder.isEmpty())
             return false;
-        return delete(existingOrder.get());
+        orders.removeIf(o -> o.getId().equals(id));
+        return writeOrders(orders);
     }
 
-    private boolean delete(Order order) {
+    private boolean writeOrders(List<Order> orders) {
+        List<OrderItem> orderItems = orders.stream()
+                .flatMap(c -> c.getItems().stream()).collect(Collectors.toList());
         try {
-            List<Order> orders = this.read(DATA_FILE_NAME, Order.class);
-            List<OrderItem> items = this.read(DATA_ITEM_FILE_NAME, OrderItem.class);
-            orders.removeIf(o -> o.getId().equals(order.getId()));
-            List<UUID> orderItemIds = order.getItems().stream().map(OrderItem::getId).collect(Collectors.toList());
-            items.removeIf(i -> orderItemIds.contains(i.getId()));
+            this.write(DATA_FILE_NAME, orders);
+            this.write(DATA_ITEM_FILE_NAME, orderItems);
             return true;
         } catch (IOException e) {
-            Logger.printError(this.getClass().getName(), "delete", e);
+            Logger.printError(this.getClass().getName(), "writeOrders", e);
             return false;
         }
     }
