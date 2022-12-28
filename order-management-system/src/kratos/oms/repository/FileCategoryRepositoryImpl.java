@@ -27,6 +27,11 @@ public class FileCategoryRepositoryImpl extends BaseFileRepository implements Ca
     }
 
     @Override
+    public Optional<Category> findById(UUID id) {
+        return listAll().stream().filter(c -> c.getId().equals(id)).findFirst();
+    }
+
+    @Override
     public boolean add(Category category) {
         List<Category> categories = listAll();
         Optional<Category> existingCategory = categories.stream()

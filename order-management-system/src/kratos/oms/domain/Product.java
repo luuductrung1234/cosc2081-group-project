@@ -84,6 +84,18 @@ public class Product extends Domain<UUID> {
         return category;
     }
 
+    public void setPrice(double price) {
+        this.price = price;
+    }
+
+    public void setCurrency(String currency) {
+        this.currency = currency;
+    }
+
+    public void setCategory(Category category) {
+        this.category = category;
+    }
+
     @Override
     public String toString() {
         String category = (this.category == null) ? "none" : this.category.getName();
