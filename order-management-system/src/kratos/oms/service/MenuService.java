@@ -11,16 +11,25 @@
 
 package kratos.oms.service;
 
+import kratos.oms.domain.Category;
+import kratos.oms.domain.Product;
 import kratos.oms.domain.Role;
 import kratos.oms.model.account.CreateAccountModel;
 import kratos.oms.model.account.LoginModel;
+import kratos.oms.model.category.SearchCategoryModel;
+import kratos.oms.model.product.SearchProductModel;
 import kratos.oms.seedwork.Helpers;
 import kratos.oms.seedwork.ActionOption;
 import kratos.oms.seedwork.Logger;
+import kratos.oms.seedwork.ValueOption;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 public class MenuService {
     private final Scanner scanner = new Scanner(System.in);
@@ -28,12 +37,18 @@ public class MenuService {
     private final CartService cartService;
     private final ProductService productService;
     private final OrderService orderService;
+    private final CategoryService categoryService;
+    private final CustomerService customerService;
 
-    public MenuService(AuthService authService, CartService cartService, ProductService productService, OrderService orderService) {
+    public MenuService(AuthService authService, CartService cartService,
+                       ProductService productService, OrderService orderService,
+                       CategoryService categoryService, CustomerService customerService) {
         this.authService = authService;
         this.cartService = cartService;
         this.productService = productService;
         this.orderService = orderService;
+        this.categoryService = categoryService;
+        this.customerService = customerService;
     }
 
     public void homeScreen() {
@@ -93,8 +108,44 @@ public class MenuService {
     }
 
     public void productScreen() {
-        banner("products");
-        // TODO: implement
+        AtomicReference<SearchProductModel> searchModel = new AtomicReference<>(new SearchProductModel());
+        AtomicBoolean goBack = new AtomicBoolean(false);
+        do {
+            banner("products");
+            List<Product> products = productService.search(searchModel.get());
+            System.out.printf("%-10s %-10s %-10s %-10s\n", "No", "name", "category", "price");
+            int index = 0;
+            for (Product product : products) {
+                System.out.printf("%-10d %-10s %-10s %-10s\n", index, product.getName(), product.getCategory().getName(),
+                        String.format("%f (%s)", product.getPrice(), product.getCurrency()));
+                index++;
+            }
+            Helpers.requestSelectAction(scanner, "Your choice [0-4]: ", new ArrayList<>() {{
+                add(new ActionOption<>("search", () -> {
+                    try {
+                        SearchProductModel newSearchModel = new SearchProductModel();
+                        List<ValueOption<UUID>> categoryOptions = categoryService.search(new SearchCategoryModel()).stream()
+                                .map(c -> new ValueOption<>(c.getName(), c.getId())).collect(Collectors.toList());
+                        categoryOptions.add(new ValueOption<>("None", null));
+
+                        Helpers.requestInput(scanner, "Enter product name: ", "name", newSearchModel);
+                        Helpers.requestDoubleInput(scanner, "Enter from price: ", "fromPrice", newSearchModel);
+                        Helpers.requestDoubleInput(scanner, "Enter to price: ", "toPrice", newSearchModel);
+                        UUID categoryId = Helpers.requestSelectValue(scanner, "Choose category: ", categoryOptions);
+                        newSearchModel.setCategoryId(categoryId);
+                        Helpers.requestInput(scanner, "Enter sort field: ", "sortedBy", newSearchModel);
+
+                        searchModel.set(newSearchModel);
+                    } catch (NoSuchFieldException e) {
+                        Logger.printError(this.getClass().getName(), "productScreen", e);
+                    }
+                }));
+                add(new ActionOption<>("clear search", () -> searchModel.set(new SearchProductModel())));
+                add(new ActionOption<>("add product", () -> {/*TODO: implement*/}));
+                add(new ActionOption<>("view detail", () -> {/*TODO: implement*/}));
+                add(new ActionOption<>("go back", () -> goBack.set(true)));
+            }});
+        } while (goBack.get());
     }
 
     public void productDetailScreen() {
