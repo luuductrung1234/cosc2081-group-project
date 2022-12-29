@@ -116,6 +116,8 @@ public class MenuService {
             System.out.printf("%-10s %-10s %-10s %-10s\n", "No.", "name", "category", "price");
             if (products.isEmpty())
                 Logger.printInfo("No product found...");
+            if (categories.isEmpty() && authService.getPrincipal().getRole() == Role.ADMIN)
+                Logger.printWarning("No category found. Please add new category first!");
             for (int productNo = 0; productNo < products.size(); productNo++) {
                 Product product = products.get(productNo);
                 System.out.printf("%-10d %-10s %-10s %-10s\n", productNo, product.getName(), product.getCategory().getName(),
