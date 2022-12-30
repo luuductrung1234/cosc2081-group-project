@@ -41,20 +41,28 @@ public class Helpers {
         while (true) {
             if (action.get())
                 break;
-            System.out.print("Do you want to retry? [y/n]: ");
-            String answer = scanner.nextLine();
-            if (answer != null && (answer.equalsIgnoreCase("yes") || answer.equalsIgnoreCase("y")))
+            Boolean answer = Helpers.requestBooleanInput(scanner, "Do you want to continue? [y/n]: ");
+            if (answer)
                 continue;
             break;
         }
     }
 
-    public static <TOption extends InputOption> TOption requestSelect(Scanner scanner, String label, List<TOption> options) {
+    public static <TOption extends InputOption> TOption requestSelect(Scanner scanner, String label, List<TOption> options, int maxCol) {
         System.out.println();
         if (options == null || options.size() == 0)
             throw new IllegalArgumentException("options is required");
+        System.out.println("Available options:");
+        int displayCount = 0;
         for (int i = 0; i < options.size(); i++) {
-            System.out.printf("[%d] %s%n", i, options.get(i).getLabel());
+            if(displayCount == maxCol) {
+                System.out.println();
+                displayCount = 0;
+            }
+            System.out.printf("\t[%d] %s", i, options.get(i).getLabel());
+            displayCount++;
+            if(i == (options.size() - 1))
+                System.out.println();
         }
         while (true) {
             System.out.print(label);
@@ -72,17 +80,28 @@ public class Helpers {
     }
 
     public static <TAction extends Runnable> void requestSelectAction(Scanner scanner, String label, List<ActionOption<TAction>> options) {
-        var actionOpt = requestSelect(scanner, label, options);
+        requestSelectAction(scanner, label, options, 1);
+    }
+    public static <TAction extends Runnable> void requestSelectAction(Scanner scanner, String label, List<ActionOption<TAction>> options, int maxCol) {
+        var actionOpt = requestSelect(scanner, label, options, maxCol);
         actionOpt.getAction().run();
     }
 
     public static <TValue> TValue requestSelectValue(Scanner scanner, String label, List<ValueOption<TValue>> options) {
-        var valueOpt = requestSelect(scanner, label, options);
+        return requestSelectValue(scanner, label, options, 1);
+    }
+
+    public static <TValue> TValue requestSelectValue(Scanner scanner, String label, List<ValueOption<TValue>> options, int maxCol) {
+        var valueOpt = requestSelect(scanner, label, options, maxCol);
         return valueOpt.getValue();
     }
 
     public static <TClass, TField> void requestSelectValue(Scanner scanner, String label, List<ValueOption<TField>> options, String fieldName, TClass obj) {
-        TField input = requestSelectValue(scanner, label, options);
+        requestSelectValue(scanner, label, options, fieldName, obj, 1);
+    }
+
+    public static <TClass, TField> void requestSelectValue(Scanner scanner, String label, List<ValueOption<TField>> options, String fieldName, TClass obj, int maxCol) {
+        TField input = requestSelectValue(scanner, label, options, maxCol);
         setInputToObject(fieldName, input, obj);
     }
 
@@ -159,11 +178,40 @@ public class Helpers {
     }
 
     public static <TClass> void requestBoolInput(Scanner scanner, String label, String fieldName, TClass obj) throws RuntimeException {
-        requestInput(scanner, label, fieldName, (value) -> Helpers.isNullOrEmpty(value) ? null : Boolean.parseBoolean(value), obj);
+        requestInput(scanner, label, fieldName, (value) -> {
+                    if (value != null && (value.equalsIgnoreCase("yes") || value.equalsIgnoreCase("y")))
+                        return true;
+                    else if (value != null && (value.equalsIgnoreCase("no") || value.equalsIgnoreCase("n")))
+                        return false;
+                    return null;
+                },
+                obj);
     }
 
     public static Boolean requestBooleanInput(Scanner scanner, String label, Function<Boolean, ValidationResult> validator) {
-        return requestInput(scanner, label, (value) -> Helpers.isNullOrEmpty(value) ? null : Boolean.parseBoolean(value), validator);
+        return requestInput(scanner, label, (value) -> {
+                    if (value != null && (value.equalsIgnoreCase("yes") || value.equalsIgnoreCase("y")))
+                        return true;
+                    else if (value != null && (value.equalsIgnoreCase("no") || value.equalsIgnoreCase("n")))
+                        return false;
+                    return null;
+                },
+                validator);
+    }
+
+    public static Boolean requestBooleanInput(Scanner scanner, String label) {
+        return requestInput(scanner, label, (value) -> {
+                    if (value != null && (value.equalsIgnoreCase("yes") || value.equalsIgnoreCase("y")))
+                        return true;
+                    else if (value != null && (value.equalsIgnoreCase("no") || value.equalsIgnoreCase("n")))
+                        return false;
+                    return null;
+                },
+                (value) -> {
+                    if (value == null)
+                        return ValidationResult.inValidInstance("Input should be [y]es/[n]o.");
+                    return ValidationResult.validInstance();
+                });
     }
 
     public static <TClass> void requestUuidInput(Scanner scanner, String label, String fieldName, TClass obj) throws RuntimeException {
