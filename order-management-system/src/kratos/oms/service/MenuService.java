@@ -16,16 +16,14 @@ import kratos.oms.domain.Product;
 import kratos.oms.domain.Role;
 import kratos.oms.model.account.CreateAccountModel;
 import kratos.oms.model.account.LoginModel;
+import kratos.oms.model.category.CreateCategoryModel;
 import kratos.oms.model.category.SearchCategoryModel;
 import kratos.oms.model.product.CreateProductModel;
 import kratos.oms.model.product.UpdateProductModel;
 import kratos.oms.model.product.SearchProductModel;
 import kratos.oms.seedwork.*;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Scanner;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -113,15 +111,26 @@ public class MenuService {
             banner("product list");
             List<Product> products = productService.search(searchModel.get());
             List<Category> categories = categoryService.search(new SearchCategoryModel());
-            System.out.printf("%-10s %-10s %-10s %-10s\n", "No.", "name", "category", "price");
+
+            System.out.printf("search by \n\t name: %-20s \n\t category: %-20s \n\t price from:%-5s to:%-5s\n",
+                    Helpers.isNullOrEmpty(searchModel.get().getName()) ? "n/a" : searchModel.get().getName(),
+                    searchModel.get().getCategoryId() == null ? "n/a" : categories.stream()
+                            .filter(c -> c.getId().equals(searchModel.get().getCategoryId())).findFirst().get().getName(),
+                    searchModel.get().getFromPrice() == null ? "n/a" : searchModel.get().getFromPrice().toString(),
+                    searchModel.get().getToPrice() == null ? "n/a" : searchModel.get().getToPrice().toString());
+            System.out.printf("sort by: %s\n\n",
+                    Helpers.isNullOrEmpty(searchModel.get().getSortedBy()) ? "n/a" : searchModel.get().getSortedBy());
+
+            System.out.printf("%-7s %-20s %-15s %-10s\n", "No.", "name", "category", "price");
+            System.out.println("-".repeat(60));
             if (products.isEmpty())
                 Logger.printInfo("No product found...");
             if (categories.isEmpty() && authService.getPrincipal().getRole() == Role.ADMIN)
                 Logger.printWarning("No category found. Please add new category first!");
             for (int productNo = 0; productNo < products.size(); productNo++) {
                 Product product = products.get(productNo);
-                System.out.printf("%-10d %-10s %-10s %-10s\n", productNo, product.getName(), product.getCategory().getName(),
-                        String.format("%f (%s)", product.getPrice(), product.getCurrency()));
+                System.out.printf("%-7d %-20s %-15s %-10s\n", productNo, product.getName(), product.getCategory().getName(),
+                        String.format("%.2f (%s)", product.getPrice(), product.getCurrency()));
             }
 
             List<ActionOption<Runnable>> actionOptions = new ArrayList<>() {{
@@ -133,11 +142,11 @@ public class MenuService {
                                 .map(c -> new ValueOption<>(c.getName(), c.getId())).collect(Collectors.toList());
                         categoryOptions.add(new ValueOption<>("Skip", null));
 
-                        Helpers.requestStringInput(scanner, "Enter product name: ", "name", newSearchModel);
-                        Helpers.requestDoubleInput(scanner, "Enter from price: ", "fromPrice", newSearchModel);
-                        Helpers.requestDoubleInput(scanner, "Enter to price: ", "toPrice", newSearchModel);
-                        Helpers.requestSelectValue(scanner, "Choose category: ", categoryOptions, "categoryId", newSearchModel);
-                        Helpers.requestStringInput(scanner, "Enter sort field: ", "sortedBy", newSearchModel);
+                        Helpers.requestStringInput(scanner, "Search by name: ", "name", newSearchModel);
+                        Helpers.requestDoubleInput(scanner, "Filter from price: ", "fromPrice", newSearchModel);
+                        Helpers.requestDoubleInput(scanner, "Filter to price: ", "toPrice", newSearchModel);
+                        Helpers.requestSelectValue(scanner, "Filter by category: ", categoryOptions, "categoryId", newSearchModel, 3);
+                        Helpers.requestStringInput(scanner, "Sort by field: ", "sortedBy", newSearchModel);
                         searchModel.set(newSearchModel);
                     } catch (RuntimeException e) {
                         Logger.printError(this.getClass().getName(), "productScreen", e);
@@ -160,7 +169,7 @@ public class MenuService {
                         }
                         return ValidationResult.validInstance();
                     });
-                    productDetailScreen(products.get(productNo));
+                    productDetailScreen(products.get(productNo).getId());
                 }));
 
             actionOptions.addAll(new ArrayList<>() {{
@@ -179,27 +188,40 @@ public class MenuService {
         } while (!goBack.get());
     }
 
-    public void productDetailScreen(Product product) {
+    public void productDetailScreen(UUID productId) {
         AtomicBoolean goBack = new AtomicBoolean(false);
         do {
             banner("product detail");
-            System.out.printf("%-5s: %-10s %-5s %-10s\n", "Name", product.getName(), "Category", product.getCategory());
-            System.out.printf("%-5s: %-10f %-5s %-10s\n", "Price", product.getPrice(), "Currency", product.getCurrency());
+            Optional<Product> productOpt = productService.getDetail(productId);
+            if(productOpt.isEmpty())
+                throw new IllegalStateException("Product with id: " + productId + " not found!");
+            productOpt.get().displayDetail();
 
             List<ActionOption<Runnable>> actionOptions = new ArrayList<>();
-            if (authService.getPrincipal().getRole() == Role.ADMIN)
-                actionOptions.add(new ActionOption<>("edit product", () -> addOrUpdateProductScreen(product)));
-            else
-                actionOptions.add(new ActionOption<>("add to cart", () -> cartService.addItem(product, 1)));
+            if (authService.getPrincipal().getRole() == Role.ADMIN) {
+                actionOptions.add(new ActionOption<>("edit product", () -> {
+                    addOrUpdateProductScreen(productId);
+                }));
+                actionOptions.add(new ActionOption<>("delete product", () -> {
+                    Boolean isDelete = Helpers.requestBooleanInput(scanner, "Do you want to delete this product [y/n]? ");
+                    if (isDelete) {
+                        productService.delete(productId);
+                        Logger.printSuccess("Delete product successfully!");
+                        goBack.set(true);
+                    }
+                }));
+            } else
+                actionOptions.add(new ActionOption<>("add to cart", () -> cartService.addItem(productOpt.get(), 1)));
+
             actionOptions.add(new ActionOption<>("go back", () -> goBack.set(true)));
 
             Helpers.requestSelectAction(scanner, "Your choice [0-" + (actionOptions.size() - 1) + "]: ", actionOptions);
         } while (!goBack.get());
     }
 
-    public void addOrUpdateProductScreen(Product product) {
+    public void addOrUpdateProductScreen(UUID productId) {
         try {
-            if (product == null) {
+            if (productId == null) {
                 banner("add product");
                 CreateProductModel model = new CreateProductModel();
                 Helpers.requestStringInput(scanner, "Enter product name: ", "name", model);
@@ -208,28 +230,34 @@ public class MenuService {
                 Helpers.requestSelectValue(scanner, "Enter product category: ",
                         categoryService.search(new SearchCategoryModel()).stream()
                                 .map(c -> new ValueOption<>(c.getName(), c.getId())).collect(Collectors.toList()),
-                        "currency", model);
+                        "categoryId", model);
                 productService.add(model);
+                Logger.printSuccess("Add new product successfully!");
             } else {
                 banner("edit product");
                 UpdateProductModel model = new UpdateProductModel();
+                Optional<Product> productOpt = productService.getDetail(productId);
+                if(productOpt.isEmpty())
+                    throw new IllegalStateException("Product with id: " + productId + " not found!");
+                Product product = productOpt.get();
                 model.setProductId(product.getId());
-                Logger.printInfo(String.format("Old price: %f%n", product.getPrice()));
+                Logger.printInfo(String.format("Old price: %f", product.getPrice()));
                 Helpers.requestDoubleInput(scanner, "Enter product price: ", "price", model);
                 if (model.getPrice() == null)
                     model.setPrice(product.getPrice());
-                Logger.printInfo(String.format("Old currency: %s%n", product.getCurrency()));
+                Logger.printInfo(String.format("Old currency: %s", product.getCurrency()));
                 Helpers.requestStringInput(scanner, "Enter product currency: ", "currency", model);
                 if (model.getCurrency() == null)
                     model.setCurrency(product.getCurrency());
-                Logger.printInfo(String.format("Old category: %s%n", product.getCategory().getName()));
+                Logger.printInfo(String.format("Old category: %s", product.getCategory().getName()));
                 Helpers.requestSelectValue(scanner, "Enter product category: ",
                         categoryService.search(new SearchCategoryModel()).stream()
                                 .map(c -> new ValueOption<>(c.getName(), c.getId())).collect(Collectors.toList()),
-                        "currency", model);
+                        "categoryId", model, 3);
                 if (model.getCategoryId() == null)
                     model.setCategoryId(product.getCategory().getId());
                 productService.update(model);
+                Logger.printSuccess("Update product successfully!");
             }
         } catch (RuntimeException e) {
             Logger.printError(this.getClass().getName(), "addOrUpdateProductScreen", e);
@@ -237,13 +265,100 @@ public class MenuService {
     }
 
     public void categoryScreen() {
-        banner("category list");
-        // TODO: implement
+        AtomicReference<SearchCategoryModel> searchModel = new AtomicReference<>(new SearchCategoryModel());
+        AtomicBoolean goBack = new AtomicBoolean(false);
+        do {
+            banner("category list");
+            List<Category> categories = categoryService.search(new SearchCategoryModel());
+
+            System.out.printf("search by name: %-5s\n", Helpers.isNullOrEmpty(searchModel.get().getName()) ? "n/a" : searchModel.get().getName());
+
+            System.out.printf("%-7s %-10s\n", "No.", "name");
+            System.out.println("-".repeat(25));
+            if (categories.isEmpty())
+                Logger.printInfo("No category found...");
+            for (int categoryNo = 0; categoryNo < categories.size(); categoryNo++) {
+                Category category = categories.get(categoryNo);
+                System.out.printf("%-7d %-10s\n", categoryNo, category.getName());
+            }
+
+            List<ActionOption<Runnable>> actionOptions = new ArrayList<>() {{
+                add(new ActionOption<>("search", () -> {
+                    try {
+                        SearchCategoryModel newSearchModel = new SearchCategoryModel();
+                        Helpers.requestStringInput(scanner, "Search by name: ", "name", newSearchModel);
+                        searchModel.set(newSearchModel);
+                    } catch (RuntimeException e) {
+                        Logger.printError(this.getClass().getName(), "productScreen", e);
+                    }
+                }));
+                add(new ActionOption<>("clear search", () -> searchModel.set(new SearchCategoryModel())));
+            }};
+
+            if (authService.getPrincipal().getRole() == Role.ADMIN)
+                actionOptions.add(new ActionOption<>("add category", this::addCategoryScreen));
+
+            if (categories.size() > 0)
+                actionOptions.add(new ActionOption<>("view detail", () -> {
+                    int categoryNo = Helpers.requestIntInput(scanner, "Enter category No. to view detail: ", (value) -> {
+                        if (value < 0 || value >= categories.size()) {
+                            return ValidationResult.inValidInstance("Given category No. is out of index.");
+                        }
+                        return ValidationResult.validInstance();
+                    });
+                    categoryDetailScreen(categories.get(categoryNo));
+                }));
+
+            actionOptions.addAll(new ArrayList<>() {{
+                add(new ActionOption<>("go back", () -> goBack.set(true)));
+                add(new ActionOption<>("logout", () -> {
+                    authService.logout();
+                    cartService.save();
+                    System.out.println();
+                    Logger.printSuccess("Logout successfully.");
+                    goBack.set(true);
+                }));
+                add(new ActionOption<>("exit", () -> exitScreen()));
+            }});
+
+            Helpers.requestSelectAction(scanner, "Your choice [0-" + (actionOptions.size() - 1) + "]: ", actionOptions);
+        } while (!goBack.get());
     }
 
-    public void categoryDetailScreen() {
-        banner("category detail");
-        // TODO: implement
+    public void categoryDetailScreen(Category category) {
+        AtomicBoolean goBack = new AtomicBoolean(false);
+        do {
+            banner("category detail");
+            System.out.printf("%-5s: %-10s \n", "Id", category.getId());
+            System.out.printf("%-5s: %-10s \n", "Name", category.getName());
+
+            List<ActionOption<Runnable>> actionOptions = new ArrayList<>();
+            if (authService.getPrincipal().getRole() == Role.ADMIN)
+                actionOptions.add(new ActionOption<>("delete category", () -> {
+                    Boolean isDelete = Helpers.requestBooleanInput(scanner, "Do you want to delete this category [y/n]? ");
+                    if (isDelete) {
+                        categoryService.delete(category.getId());
+                        Logger.printSuccess("Delete category successfully!");
+                        goBack.set(true);
+                    }
+                }));
+
+            actionOptions.add(new ActionOption<>("go back", () -> goBack.set(true)));
+
+            Helpers.requestSelectAction(scanner, "Your choice [0-" + (actionOptions.size() - 1) + "]: ", actionOptions);
+        } while (!goBack.get());
+    }
+
+    public void addCategoryScreen() {
+        try {
+            banner("add category");
+            CreateCategoryModel model = new CreateCategoryModel();
+            Helpers.requestStringInput(scanner, "Enter category name: ", "name", model);
+            categoryService.add(model);
+            Logger.printSuccess("Add new category successfully!");
+        } catch (RuntimeException e) {
+            Logger.printError(this.getClass().getName(), "addOrUpdateProductScreen", e);
+        }
     }
 
     public void orderScreen() {
@@ -328,9 +443,8 @@ public class MenuService {
         System.out.println("*\ts3938007, Pham Hoang Long");
         System.out.println("*\ts3915034, Do Phan Nhat Anh");
         System.out.println();
-        System.out.print("Do you want to continue? [y/n]: ");
-        String answer = scanner.nextLine();
-        if (answer != null && (answer.equalsIgnoreCase("yes") || answer.equalsIgnoreCase("y")))
+        Boolean answer = Helpers.requestBooleanInput(scanner, "Do you want to continue? [y/n]: ");
+        if (answer)
             homeScreen();
         else
             exitScreen();
