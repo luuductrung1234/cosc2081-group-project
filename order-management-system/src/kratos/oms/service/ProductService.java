@@ -20,6 +20,7 @@ public class ProductService {
     }
 
     public List<Product> search(SearchProductModel searchModel) {
+        // TODO: implement product searching
         return productRepository.listAll();
     }
 
@@ -50,6 +51,11 @@ public class ProductService {
         product.setPrice(model.getPrice());
         product.setCurrency(model.getCurrency());
         product.setCategory(categoryOpt.get());
+        productRepository.update(product);
         return product;
+    }
+
+    public boolean delete(UUID id) {
+        return productRepository.delete(id);
     }
 }
