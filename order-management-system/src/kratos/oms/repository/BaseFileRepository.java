@@ -29,7 +29,7 @@ public abstract class BaseFileRepository {
      * @return a list of domain objects (of type TDomain)
      * @throws IOException data file could not be read
      */
-    public <TDomain extends Domain> List<TDomain> read(String fileName, Class<TDomain> clazz) throws IOException {
+    public <TDomain extends Domain<?>> List<TDomain> read(String fileName, Class<TDomain> clazz) throws IOException {
         Path path = Paths.get(this.directoryUrl + File.separator + fileName);
         if (!Files.isReadable(path))
             return new ArrayList<>();
@@ -47,17 +47,29 @@ public abstract class BaseFileRepository {
      * @param records a list of domain objects (of type TDomain)
      * @throws IOException data file could not be written
      */
-    public <TDomain extends Domain> void write(String fileName, List<TDomain> records) throws IOException {
+    public <TDomain extends Domain<?>> void write(String fileName, List<TDomain> records) throws IOException {
         List<String> lines = records.stream()
                 .map(Domain::serialize)
                 .collect(Collectors.toList());
         String data = String.join("\n", lines);
         Path path = Paths.get(this.directoryUrl + File.separator + fileName);
-        Files.write(path, data.getBytes(), StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+        if(Helpers.isNullOrEmpty(data) && Files.exists(path)) {
+            Files.delete(path);
+            return;
+        }
+        Files.write(path, data.getBytes(), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE);
     }
 
+    /**
+     * Deserialize given line of text into an instance of clazz
+     *
+     * @param line text of serialized data
+     * @param clazz type of instance after deserialized
+     * @return an instance of clazz
+     * @param <TDomain> type of instance after deserialized
+     */
     @SuppressWarnings("unchecked")
-    private <TDomain extends Domain> TDomain lineDeserialize(String line, Class<TDomain> clazz) {
+    private <TDomain extends Domain<?>> TDomain lineDeserialize(String line, Class<TDomain> clazz) {
         try {
             Method deserialize = clazz.getMethod("deserialize", String.class);
             return (TDomain) deserialize.invoke(null, line);
