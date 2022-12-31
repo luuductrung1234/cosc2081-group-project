@@ -8,7 +8,7 @@
   Acknowledgement: n/a
 */
 
-package kratos.oms.model;
+package kratos.oms.model.account;
 
 import kratos.oms.domain.Role;
 import kratos.oms.seedwork.Length;
@@ -17,13 +17,13 @@ import kratos.oms.seedwork.NotNull;
 
 public class CreateAccountModel {
     @NotBlank
-    @Length(max = 100)
+    @Length(max = 100, min = 5, message = "Given username must have valid length between 5 and 100 characters.")
     private String username;
     @NotBlank
-    @Length(max = 100)
+    @Length(max = 100, min = 8, message = "Given password must have valid length between 8 and 100 characters.")
     private String password;
     @NotBlank
-    @Length(max = 100)
+    @Length(max = 100, min = 1, message = "Given full-name must have valid length between 1 and 100 characters.")
     private String fullName;
     @NotNull
     private Role role;

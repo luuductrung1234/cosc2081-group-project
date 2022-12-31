@@ -8,7 +8,7 @@
   Acknowledgement: n/a
 */
 
-package kratos.oms.model;
+package kratos.oms.model.account;
 
 import kratos.oms.seedwork.NotBlank;
 

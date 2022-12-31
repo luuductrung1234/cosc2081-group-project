@@ -1,0 +1,3 @@
+a585eceb-18a2-4595-acdd-af7a7017adbd,Laptop
+fad88005-1d53-4325-91b1-bd5a05c2e2ec,Furniture
+09ee8084-3ab9-4e3e-a59e-4b9284bd9802,Electronic

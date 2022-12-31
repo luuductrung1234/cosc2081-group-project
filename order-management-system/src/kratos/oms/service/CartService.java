@@ -26,7 +26,7 @@ public class CartService {
                 .filter(item -> item.getProductId().equals(product.getId()))
                 .findFirst();
         if (itemOpt.isEmpty()) {
-            cachedCart.addItem(new CartItem(product.getId(), quantity));
+            cachedCart.addItem(new CartItem(cachedCart.getId(), product.getId(), quantity));
             return;
         }
         CartItem item = itemOpt.get();

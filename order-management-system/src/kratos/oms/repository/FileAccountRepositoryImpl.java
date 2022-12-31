@@ -7,17 +7,18 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
-public class FileAccountRepositoryImpl extends BaseFileRepository<UUID, Account> implements AccountRepository {
-    public FileAccountRepositoryImpl(String fileUrl) {
-        super(fileUrl);
+public class FileAccountRepositoryImpl extends BaseFileRepository implements AccountRepository {
+    private final static String DATA_FILE_NAME = "accounts.txt";
+
+    public FileAccountRepositoryImpl(String directoryUrl) {
+        super(directoryUrl);
     }
 
     @Override
     public List<Account> listAll() {
         try {
-            return new ArrayList<>(this.read(Account.class));
+            return this.read(DATA_FILE_NAME, Account.class);
         } catch (IOException e) {
             Logger.printError(this.getClass().getName(), "listAll", e);
             return new ArrayList<>();
@@ -31,10 +32,15 @@ public class FileAccountRepositoryImpl extends BaseFileRepository<UUID, Account>
 
     @Override
     public boolean add(Account account) {
-        var accounts = listAll();
+        List<Account> accounts = listAll();
+        Optional<Account> existingAccount = accounts.stream()
+                .filter(a -> a.getId().equals(account.getId())
+                        || a.getUsername().equals(account.getUsername())).findFirst();
+        if (existingAccount.isPresent())
+            return false;
         accounts.add(account);
         try {
-            this.write(accounts);
+            this.write(DATA_FILE_NAME, accounts);
             return true;
         } catch (IOException e) {
             Logger.printError(this.getClass().getName(), "add", e);
@@ -45,10 +51,14 @@ public class FileAccountRepositoryImpl extends BaseFileRepository<UUID, Account>
     @Override
     public boolean update(Account account) {
         List<Account> accounts = listAll();
+        Optional<Account> existingAccount = accounts.stream()
+                .filter(a -> a.getId().equals(account.getId())).findFirst();
+        if (existingAccount.isEmpty())
+            return false;
         accounts.removeIf(a -> a.getId().equals(account.getId()));
         accounts.add(account);
         try {
-            this.write(accounts);
+            this.write(DATA_FILE_NAME, accounts);
             return true;
         } catch (IOException e) {
             Logger.printError(this.getClass().getName(), "update", e);

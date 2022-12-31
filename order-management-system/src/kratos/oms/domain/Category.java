@@ -10,6 +10,10 @@
 
 package kratos.oms.domain;
 
+import kratos.oms.seedwork.Helpers;
+
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 public class Category extends Domain<UUID>{
@@ -26,16 +30,23 @@ public class Category extends Domain<UUID>{
 
     @Override
     public String serialize() {
-        return null;
+        List<String> fields = new ArrayList<>() {{
+            add(id.toString());
+            add(name);
+        }};
+        return String.join(",", fields);
     }
 
     /**
      * override static method Domain.deserialize
      * @param data serialized string data
-     * @return new instance of Account
+     * @return new instance of Category
      */
-    public static Account deserialize(String data) {
-        return null;
+    public static Category deserialize(String data) {
+        if (Helpers.isNullOrEmpty(data))
+            throw new IllegalArgumentException("data to deserialize should not be empty!");
+        String[] fields = data.split(",", 2);
+        return new Category(UUID.fromString(fields[0]), fields[1]);
     }
 
     public UUID getId() {
@@ -44,5 +55,10 @@ public class Category extends Domain<UUID>{
 
     public String getName() {
         return name;
+    }
+
+    @Override
+    public String toString() {
+        return "Category{name='" + name + "'}";
     }
 }

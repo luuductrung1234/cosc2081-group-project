@@ -1,4 +1,4 @@
-package kratos.oms.model;
+package kratos.oms.model.account;
 
 import kratos.oms.domain.Membership;
 

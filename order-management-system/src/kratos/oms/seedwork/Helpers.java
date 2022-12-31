@@ -18,14 +18,15 @@ import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
-import java.util.Base64;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class Helpers {
+    public static UUID emptyUuid() {
+        return UUID.fromString("00000000-0000-0000-0000-000000000000");
+    }
+
     public static boolean isNullOrEmpty(String str) {
         return str == null || str.trim().isEmpty();
     }
@@ -36,24 +37,32 @@ public class Helpers {
         return Base64.getEncoder().encodeToString(hash);
     }
 
-    public static void loopRequest(Scanner scanner, Supplier<Boolean> action) {
+    public static void loopAction(Scanner scanner, Supplier<Boolean> action) {
         while (true) {
-            if(action.get())
+            if (action.get())
                 break;
-            System.out.print("Do you want to retry? [y/n]: ");
-            String answer = scanner.nextLine();
-            if (answer != null && (answer.equalsIgnoreCase("yes") || answer.equalsIgnoreCase("y")))
+            Boolean answer = Helpers.requestBooleanInput(scanner, "Do you want to continue? [y/n]: ");
+            if (answer)
                 continue;
             break;
         }
     }
 
-    public static void requestSelect(Scanner scanner, String label, List<InputOption<Runnable>> options) {
+    public static <TOption extends InputOption> TOption requestSelect(Scanner scanner, String label, List<TOption> options, int maxCol) {
         System.out.println();
         if (options == null || options.size() == 0)
             throw new IllegalArgumentException("options is required");
+        System.out.println("Available options:");
+        int displayCount = 0;
         for (int i = 0; i < options.size(); i++) {
-            System.out.printf("[%d] %s%n", i, options.get(i).getLabel());
+            if(displayCount == maxCol) {
+                System.out.println();
+                displayCount = 0;
+            }
+            System.out.printf("\t[%d] %s", i, options.get(i).getLabel());
+            displayCount++;
+            if(i == (options.size() - 1))
+                System.out.println();
         }
         while (true) {
             System.out.print(label);
@@ -63,63 +72,170 @@ public class Helpers {
                     Logger.printWarning("There is no option [%d]", choice);
                     continue;
                 }
-                options.get(choice).getAction().run();
-                return;
+                return options.get(choice);
             } catch (NumberFormatException e) {
                 Logger.printWarning("Please enter a valid number!");
             }
         }
     }
 
-    public static <TClass, TField> void requestInput(Scanner scanner, String label, String fieldName, Function<String, TField> converter, TClass obj) throws NoSuchFieldException {
-        boolean isValid = false;
-        while (!isValid) {
-            System.out.print(label);
-            TField input = converter.apply(scanner.nextLine());
-            ValidationResult validationResult = validate(fieldName, input, obj.getClass());
-            isValid = validationResult.isValid();
-            if (!isValid) {
-                Logger.printWarning("Invalid! %s", validationResult.getErrorMessage());
-                continue;
-            }
-            Method setter = Arrays.stream(obj.getClass().getMethods())
-                    .filter(m -> m.getName().equalsIgnoreCase("set" + fieldName) && m.canAccess(obj))
-                    .findFirst().orElse(null);
-            if (setter == null)
-                throw new IllegalStateException(String.format("Class: %s has no setter for Field: %s", obj.getClass().getName(), fieldName));
+    public static <TAction extends Runnable> void requestSelectAction(Scanner scanner, String label, List<ActionOption<TAction>> options) {
+        requestSelectAction(scanner, label, options, 1);
+    }
+    public static <TAction extends Runnable> void requestSelectAction(Scanner scanner, String label, List<ActionOption<TAction>> options, int maxCol) {
+        var actionOpt = requestSelect(scanner, label, options, maxCol);
+        actionOpt.getAction().run();
+    }
+
+    public static <TValue> TValue requestSelectValue(Scanner scanner, String label, List<ValueOption<TValue>> options) {
+        return requestSelectValue(scanner, label, options, 1);
+    }
+
+    public static <TValue> TValue requestSelectValue(Scanner scanner, String label, List<ValueOption<TValue>> options, int maxCol) {
+        var valueOpt = requestSelect(scanner, label, options, maxCol);
+        return valueOpt.getValue();
+    }
+
+    public static <TClass, TField> void requestSelectValue(Scanner scanner, String label, List<ValueOption<TField>> options, String fieldName, TClass obj) {
+        requestSelectValue(scanner, label, options, fieldName, obj, 1);
+    }
+
+    public static <TClass, TField> void requestSelectValue(Scanner scanner, String label, List<ValueOption<TField>> options, String fieldName, TClass obj, int maxCol) {
+        TField input = requestSelectValue(scanner, label, options, maxCol);
+        setInputToObject(fieldName, input, obj);
+    }
+
+    public static <TField> TField requestInput(Scanner scanner, String label,
+                                               Function<String, TField> converter,
+                                               Function<TField, ValidationResult> validator) {
+        while (true) {
             try {
-                setter.invoke(obj, input);
-            } catch (IllegalAccessException | InvocationTargetException e) {
-                throw new IllegalStateException(String.format("Can not access Setter: %s", setter.getName()));
+                System.out.print(label);
+                TField input = converter.apply(scanner.nextLine());
+                if (validator == null)
+                    return input;
+                ValidationResult validationResult = validator.apply(input);
+                if (!validationResult.isValid()) {
+                    Logger.printWarning("Invalid! %s", validationResult.getErrorMessage());
+                    continue;
+                }
+                return input;
+            } catch (Exception e) {
+                Logger.printWarning("Fail to parse your input. Please enter with valid format!");
             }
         }
     }
 
-    public static <TClass> void requestInput(Scanner scanner, String label, String fieldName, TClass obj) throws NoSuchFieldException {
+    public static <TClass, TField> void requestInput(Scanner scanner, String label, String fieldName, Function<String, TField> converter, TClass obj) throws RuntimeException {
+        TField input = requestInput(scanner, label, converter, (value) -> {
+            try {
+                return validate(fieldName, value, obj.getClass());
+            } catch (NoSuchFieldException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        setInputToObject(fieldName, input, obj);
+    }
+
+    public static <TClass> void requestStringInput(Scanner scanner, String label, String fieldName, TClass obj) throws RuntimeException {
         requestInput(scanner, label, fieldName, (value) -> value, obj);
     }
 
-    public static <TClass> void requestIntInput(Scanner scanner, String label, String fieldName, TClass obj) throws NoSuchFieldException {
-        requestInput(scanner, label, fieldName, Integer::parseInt, obj);
+    public static String requestStringInput(Scanner scanner, String label, Function<String, ValidationResult> validator) {
+        return requestInput(scanner, label, (value) -> value, validator);
     }
 
-    public static <TClass> void requestLongInput(Scanner scanner, String label, String fieldName, TClass obj) throws NoSuchFieldException {
-        requestInput(scanner, label, fieldName, Long::parseLong, obj);
+    public static <TClass> void requestIntInput(Scanner scanner, String label, String fieldName, TClass obj) throws RuntimeException {
+        requestInput(scanner, label, fieldName, (value) -> Helpers.isNullOrEmpty(value) ? null : Integer.parseInt(value), obj);
     }
 
-    public static <TClass> void requestFloatInput(Scanner scanner, String label, String fieldName, TClass obj) throws NoSuchFieldException {
-        requestInput(scanner, label, fieldName, Float::parseFloat, obj);
+    public static Integer requestIntInput(Scanner scanner, String label, Function<Integer, ValidationResult> validator) {
+        return requestInput(scanner, label, (value) -> Helpers.isNullOrEmpty(value) ? null : Integer.parseInt(value), validator);
     }
 
-    public static <TClass> void requestDoubleInput(Scanner scanner, String label, String fieldName, TClass obj) throws NoSuchFieldException {
-        requestInput(scanner, label, fieldName, Double::parseDouble, obj);
+    public static <TClass> void requestLongInput(Scanner scanner, String label, String fieldName, TClass obj) throws RuntimeException {
+        requestInput(scanner, label, fieldName, (value) -> Helpers.isNullOrEmpty(value) ? null : Long.parseLong(value), obj);
     }
 
-    public static <TClass> void requestBoolInput(Scanner scanner, String label, String fieldName, TClass obj) throws NoSuchFieldException {
-        requestInput(scanner, label, fieldName, Boolean::parseBoolean, obj);
+    public static Long requestLongInput(Scanner scanner, String label, Function<Long, ValidationResult> validator) {
+        return requestInput(scanner, label, (value) -> Helpers.isNullOrEmpty(value) ? null : Long.parseLong(value), validator);
     }
 
-    public static <TClass, TField> ValidationResult validate(String fieldName, TField value, Class<TClass> clazz) throws NoSuchFieldException {
+    public static <TClass> void requestFloatInput(Scanner scanner, String label, String fieldName, TClass obj) throws RuntimeException {
+        requestInput(scanner, label, fieldName, (value) -> Helpers.isNullOrEmpty(value) ? null : Float.parseFloat(value), obj);
+    }
+
+    public static Float requestFloatInput(Scanner scanner, String label, Function<Float, ValidationResult> validator) {
+        return requestInput(scanner, label, (value) -> Helpers.isNullOrEmpty(value) ? null : Float.parseFloat(value), validator);
+    }
+
+    public static <TClass> void requestDoubleInput(Scanner scanner, String label, String fieldName, TClass obj) throws RuntimeException {
+        requestInput(scanner, label, fieldName, (value) -> Helpers.isNullOrEmpty(value) ? null : Double.parseDouble(value), obj);
+    }
+
+    public static Double requestDoubleInput(Scanner scanner, String label, Function<Double, ValidationResult> validator) {
+        return requestInput(scanner, label, (value) -> Helpers.isNullOrEmpty(value) ? null : Double.parseDouble(value), validator);
+    }
+
+    public static <TClass> void requestBoolInput(Scanner scanner, String label, String fieldName, TClass obj) throws RuntimeException {
+        requestInput(scanner, label, fieldName, (value) -> {
+                    if (value != null && (value.equalsIgnoreCase("yes") || value.equalsIgnoreCase("y")))
+                        return true;
+                    else if (value != null && (value.equalsIgnoreCase("no") || value.equalsIgnoreCase("n")))
+                        return false;
+                    return null;
+                },
+                obj);
+    }
+
+    public static Boolean requestBooleanInput(Scanner scanner, String label, Function<Boolean, ValidationResult> validator) {
+        return requestInput(scanner, label, (value) -> {
+                    if (value != null && (value.equalsIgnoreCase("yes") || value.equalsIgnoreCase("y")))
+                        return true;
+                    else if (value != null && (value.equalsIgnoreCase("no") || value.equalsIgnoreCase("n")))
+                        return false;
+                    return null;
+                },
+                validator);
+    }
+
+    public static Boolean requestBooleanInput(Scanner scanner, String label) {
+        return requestInput(scanner, label, (value) -> {
+                    if (value != null && (value.equalsIgnoreCase("yes") || value.equalsIgnoreCase("y")))
+                        return true;
+                    else if (value != null && (value.equalsIgnoreCase("no") || value.equalsIgnoreCase("n")))
+                        return false;
+                    return null;
+                },
+                (value) -> {
+                    if (value == null)
+                        return ValidationResult.inValidInstance("Input should be [y]es/[n]o.");
+                    return ValidationResult.validInstance();
+                });
+    }
+
+    public static <TClass> void requestUuidInput(Scanner scanner, String label, String fieldName, TClass obj) throws RuntimeException {
+        requestInput(scanner, label, fieldName, (value) -> Helpers.isNullOrEmpty(value) ? null : UUID.fromString(value), obj);
+    }
+
+    public static UUID requestUuidInput(Scanner scanner, String label, Function<UUID, ValidationResult> validator) {
+        return requestInput(scanner, label, (value) -> Helpers.isNullOrEmpty(value) ? null : UUID.fromString(value), validator);
+    }
+
+    private static <TClass, TField> void setInputToObject(String fieldName, TField input, TClass obj) {
+        Method setter = Arrays.stream(obj.getClass().getMethods())
+                .filter(m -> m.getName().equalsIgnoreCase("set" + fieldName) && m.canAccess(obj))
+                .findFirst().orElse(null);
+        if (setter == null)
+            throw new IllegalStateException(String.format("Class: %s has no setter for Field: %s", obj.getClass().getName(), fieldName));
+        try {
+            setter.invoke(obj, input);
+        } catch (IllegalAccessException | InvocationTargetException e) {
+            throw new IllegalStateException(String.format("Can not access Setter: %s", setter.getName()));
+        }
+    }
+
+    private static <TClass, TField> ValidationResult validate(String fieldName, TField value, Class<TClass> clazz) throws NoSuchFieldException {
         Field field = clazz.getDeclaredField(fieldName);
         field.setAccessible(true);
         Length lengthAnno = field.getAnnotation(Length.class);
@@ -151,9 +267,23 @@ public class Helpers {
         if (notEmptyAnno != null && value != null) {
             if (value instanceof List) {
                 return ValidationResult.getInstance(((List<?>) value).size() > 0, notEmptyAnno.message());
+            } else if (value instanceof UUID) {
+                return ValidationResult.getInstance(value.equals(emptyUuid()), notEmptyAnno.message());
             } else if (value instanceof Object[]) {
                 return ValidationResult.getInstance(((Object[]) value).length > 0, notEmptyAnno.message());
             }
+        }
+
+        GreaterThan greaterThanAnno = field.getAnnotation(GreaterThan.class);
+        if (greaterThanAnno != null && value != null) {
+            if (value instanceof Double)
+                return ValidationResult.getInstance(((Double) value) > greaterThanAnno.value(), greaterThanAnno.message());
+            if (value instanceof Float)
+                return ValidationResult.getInstance(((Float) value) > Double.valueOf(greaterThanAnno.value()).floatValue(), greaterThanAnno.message());
+            if (value instanceof Integer)
+                return ValidationResult.getInstance(((Integer) value) > Double.valueOf(greaterThanAnno.value()).intValue(), greaterThanAnno.message());
+            if (value instanceof Long)
+                return ValidationResult.getInstance(((Long) value) > Double.valueOf(greaterThanAnno.value()).longValue(), greaterThanAnno.message());
         }
 
         NotNull notNullAnno = field.getAnnotation(NotNull.class);
