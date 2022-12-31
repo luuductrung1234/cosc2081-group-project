@@ -16,6 +16,7 @@ public class CustomerService {
     }
 
     public List<Account> getAll() {
+        // TODO: implement customer searching
         return accountRepository.listAll().stream()
                 .filter(a -> a.getRole().equals(Role.CUSTOMER))
                 .collect(Collectors.toList());

@@ -48,6 +48,10 @@ public class MenuService {
         this.customerService = customerService;
     }
 
+    /**
+     * this method intentionally have infinite loop. Users are always go back to main screen (home screen)
+     */
+    @SuppressWarnings("InfiniteLoopStatement")
     public void homeScreen() {
         while (true) {
             if (!authService.isAuthenticated()) {
@@ -172,19 +176,9 @@ public class MenuService {
                     productDetailScreen(products.get(productNo).getId());
                 }));
 
-            actionOptions.addAll(new ArrayList<>() {{
-                add(new ActionOption<>("go back", () -> goBack.set(true)));
-                add(new ActionOption<>("logout", () -> {
-                    authService.logout();
-                    cartService.save();
-                    System.out.println();
-                    Logger.printSuccess("Logout successfully.");
-                    goBack.set(true);
-                }));
-                add(new ActionOption<>("exit", () -> exitScreen()));
-            }});
-
-            Helpers.requestSelectAction(scanner, "Your choice [0-" + (actionOptions.size() - 1) + "]: ", actionOptions);
+            Helpers.requestSelectAction(scanner,
+                    "Your choice [0-" + (actionOptions.size() - 1) + "]: ",
+                    addCommonActions(actionOptions, goBack));
         } while (!goBack.get());
     }
 
@@ -193,9 +187,9 @@ public class MenuService {
         do {
             banner("product detail");
             Optional<Product> productOpt = productService.getDetail(productId);
-            if(productOpt.isEmpty())
+            if (productOpt.isEmpty())
                 throw new IllegalStateException("Product with id: " + productId + " not found!");
-            productOpt.get().displayDetail();
+            productOpt.get().printDetail();
 
             List<ActionOption<Runnable>> actionOptions = new ArrayList<>();
             if (authService.getPrincipal().getRole() == Role.ADMIN) {
@@ -237,7 +231,7 @@ public class MenuService {
                 banner("edit product");
                 UpdateProductModel model = new UpdateProductModel();
                 Optional<Product> productOpt = productService.getDetail(productId);
-                if(productOpt.isEmpty())
+                if (productOpt.isEmpty())
                     throw new IllegalStateException("Product with id: " + productId + " not found!");
                 Product product = productOpt.get();
                 model.setProductId(product.getId());
@@ -309,19 +303,9 @@ public class MenuService {
                     categoryDetailScreen(categories.get(categoryNo));
                 }));
 
-            actionOptions.addAll(new ArrayList<>() {{
-                add(new ActionOption<>("go back", () -> goBack.set(true)));
-                add(new ActionOption<>("logout", () -> {
-                    authService.logout();
-                    cartService.save();
-                    System.out.println();
-                    Logger.printSuccess("Logout successfully.");
-                    goBack.set(true);
-                }));
-                add(new ActionOption<>("exit", () -> exitScreen()));
-            }});
-
-            Helpers.requestSelectAction(scanner, "Your choice [0-" + (actionOptions.size() - 1) + "]: ", actionOptions);
+            Helpers.requestSelectAction(scanner,
+                    "Your choice [0-" + (actionOptions.size() - 1) + "]: ",
+                    addCommonActions(actionOptions, goBack));
         } while (!goBack.get());
     }
 
@@ -329,8 +313,7 @@ public class MenuService {
         AtomicBoolean goBack = new AtomicBoolean(false);
         do {
             banner("category detail");
-            System.out.printf("%-5s: %-10s \n", "Id", category.getId());
-            System.out.printf("%-5s: %-10s \n", "Name", category.getName());
+            category.printDetail();
 
             List<ActionOption<Runnable>> actionOptions = new ArrayList<>();
             if (authService.getPrincipal().getRole() == Role.ADMIN)
@@ -361,16 +344,6 @@ public class MenuService {
         }
     }
 
-    public void orderScreen() {
-        banner("order list");
-        // TODO: implement
-    }
-
-    public void orderDetailScreen() {
-        banner("order detail");
-        // TODO: implement
-    }
-
     public void customerScreen() {
         banner("customer list");
         // TODO: implement
@@ -378,6 +351,16 @@ public class MenuService {
 
     public void customerDetailScreen() {
         banner("customer detail");
+        // TODO: implement
+    }
+
+    public void orderScreen() {
+        banner("order list");
+        // TODO: implement
+    }
+
+    public void orderDetailScreen() {
+        banner("order detail");
         // TODO: implement
     }
 
@@ -448,6 +431,21 @@ public class MenuService {
             homeScreen();
         else
             exitScreen();
+    }
+
+    private List<ActionOption<Runnable>> addCommonActions(List<ActionOption<Runnable>> actionOptions, AtomicBoolean goBack) {
+        actionOptions.addAll(new ArrayList<>() {{
+            add(new ActionOption<>("go back", () -> goBack.set(true)));
+            add(new ActionOption<>("logout", () -> {
+                authService.logout();
+                cartService.save();
+                System.out.println();
+                Logger.printSuccess("Logout successfully.");
+                goBack.set(true);
+            }));
+            add(new ActionOption<>("exit", () -> exitScreen()));
+        }});
+        return actionOptions;
     }
 
     private void banner(String title) {

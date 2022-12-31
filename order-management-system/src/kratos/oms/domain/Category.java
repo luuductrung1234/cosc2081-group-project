@@ -61,4 +61,9 @@ public class Category extends Domain<UUID>{
     public String toString() {
         return "Category{name='" + name + "'}";
     }
+
+    public void printDetail() {
+        System.out.printf("%-5s: %-10s \n", "Id", this.getId());
+        System.out.printf("%-5s: %-10s \n", "Name", this.getName());
+    }
 }

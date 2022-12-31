@@ -107,7 +107,7 @@ public class Product extends Domain<UUID> {
                 '}';
     }
 
-    public void displayDetail() {
+    public void printDetail() {
         System.out.printf("%-10s: %-10s \n", "Id", this.getId());
         System.out.printf("%-10s: %-10s \n", "Name", this.getName());
         System.out.printf("%-10s: %-10s \n", "Category", this.getCategory().getName());
