@@ -17,7 +17,7 @@ import kratos.oms.seedwork.*;
 
 public class CreateAccountModel {
     @NotBlank
-    @Length(max = 50, min = 5, message = "Given username must have valid length between 5 and 50 characters.")
+    @Length(max = 30, min = 5, message = "Given username must have valid length between 5 and 30 characters.")
     @NotContain(value = ",", message = "Given username should not contains ',' character")
     private String username;
     @NotBlank
