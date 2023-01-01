@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 public class FileAccountRepositoryImpl extends BaseFileRepository implements AccountRepository {
     private final static String DATA_FILE_NAME = "accounts.txt";
@@ -64,5 +65,19 @@ public class FileAccountRepositoryImpl extends BaseFileRepository implements Acc
             Logger.printError(this.getClass().getName(), "update", e);
             return false;
         }
+    }
+
+    @Override
+    public boolean delete(UUID id) {
+        List<Account> accounts = listAll();
+        try {
+            if (accounts.removeIf(a -> a.getId().equals(id))) {
+                this.write(DATA_FILE_NAME, accounts);
+                return true;
+            }
+        } catch (IOException e) {
+            Logger.printError(this.getClass().getName(), "delete", e);
+        }
+        return false;
     }
 }

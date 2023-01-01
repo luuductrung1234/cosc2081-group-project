@@ -6,10 +6,12 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Apply blank validation for input type String
+ * Apply regular expression matching for input type String
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
-public @interface NotBlank {
-    public String message() default "Given input must not be blank.";
+public @interface Match {
+    public String regex() default "";
+    public boolean caseSensitive() default true;
+    public String message() default "Given input is not matched";
 }
