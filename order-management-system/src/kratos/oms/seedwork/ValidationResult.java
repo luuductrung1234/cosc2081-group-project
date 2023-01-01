@@ -38,4 +38,12 @@ public class ValidationResult {
     public String getErrorMessage() {
         return errorMessage;
     }
+
+    public void addError(String errorMessage) {
+        isValid = false;
+        if (Helpers.isNullOrEmpty(this.errorMessage))
+            this.errorMessage = errorMessage;
+        else
+            this.errorMessage = this.errorMessage + '\n' + errorMessage;
+    }
 }

@@ -21,6 +21,8 @@ import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Helpers {
     public static UUID emptyUuid() {
@@ -55,13 +57,13 @@ public class Helpers {
         System.out.println("Available options:");
         int displayCount = 0;
         for (int i = 0; i < options.size(); i++) {
-            if(displayCount == maxCol) {
+            if (displayCount == maxCol) {
                 System.out.println();
                 displayCount = 0;
             }
             System.out.printf("\t[%d] %s", i, options.get(i).getLabel());
             displayCount++;
-            if(i == (options.size() - 1))
+            if (i == (options.size() - 1))
                 System.out.println();
         }
         while (true) {
@@ -82,6 +84,7 @@ public class Helpers {
     public static <TAction extends Runnable> void requestSelectAction(Scanner scanner, String label, List<ActionOption<TAction>> options) {
         requestSelectAction(scanner, label, options, 1);
     }
+
     public static <TAction extends Runnable> void requestSelectAction(Scanner scanner, String label, List<ActionOption<TAction>> options, int maxCol) {
         var actionOpt = requestSelect(scanner, label, options, maxCol);
         actionOpt.getAction().run();
@@ -235,43 +238,80 @@ public class Helpers {
         }
     }
 
+    /**
+     * Extract validation annotation from fieldName in TClass
+     * If the annotation was found, validate given value to satisfy the rule
+     *
+     * @param fieldName name of the field in clazz
+     * @param value value need to validate
+     * @param clazz the class contains a field named fieldName
+     * @return validation result
+     * @param <TClass> the class contains a field named fieldName
+     * @param <TField> type of field
+     * @throws NoSuchFieldException no field found in TClass
+     */
     private static <TClass, TField> ValidationResult validate(String fieldName, TField value, Class<TClass> clazz) throws NoSuchFieldException {
         Field field = clazz.getDeclaredField(fieldName);
         field.setAccessible(true);
+
+        // init a valid result at the beginning of validation
+        ValidationResult result = ValidationResult.validInstance();
+
         Length lengthAnno = field.getAnnotation(Length.class);
+        if (lengthAnno != null && lengthAnno.min() < 0)
+            throw new IllegalStateException("@Length min value must not be negative number");
         if (lengthAnno != null && value != null) {
             if (value instanceof String) {
                 if (((String) value).length() < lengthAnno.min() || ((String) value).length() > lengthAnno.max())
-                    return ValidationResult.inValidInstance(lengthAnno.message());
-                if (lengthAnno.min() > 0)
-                    return ValidationResult.validInstance();
-            } else if (value instanceof List) {
+                    result.addError(lengthAnno.message());
+            } else if (value instanceof List<?>) {
                 if (((List<?>) value).size() < lengthAnno.min() || ((List<?>) value).size() > lengthAnno.max())
-                    return ValidationResult.inValidInstance(lengthAnno.message());
-                if (lengthAnno.min() > 0)
-                    return ValidationResult.validInstance();
+                    result.addError(lengthAnno.message());
             } else if (value instanceof Object[]) {
                 if (((Object[]) value).length < lengthAnno.min() || ((Object[]) value).length > lengthAnno.max())
-                    return ValidationResult.inValidInstance(lengthAnno.message());
-                if (lengthAnno.min() > 0)
-                    return ValidationResult.validInstance();
+                    result.addError(lengthAnno.message());
             }
         }
 
         NotBlank notBlankAnno = field.getAnnotation(NotBlank.class);
-        if (notBlankAnno != null && value != null & value instanceof String) {
-            return ValidationResult.getInstance(((String) value).length() > 0, notBlankAnno.message());
+        if (notBlankAnno != null && value != null & value instanceof String
+                && (lengthAnno == null || lengthAnno.min() == 0) && ((String) value).length() == 0) {
+            result.addError(notBlankAnno.message());
         }
 
         NotEmpty notEmptyAnno = field.getAnnotation(NotEmpty.class);
         if (notEmptyAnno != null && value != null) {
-            if (value instanceof List) {
-                return ValidationResult.getInstance(((List<?>) value).size() > 0, notEmptyAnno.message());
-            } else if (value instanceof UUID) {
-                return ValidationResult.getInstance(value.equals(emptyUuid()), notEmptyAnno.message());
-            } else if (value instanceof Object[]) {
-                return ValidationResult.getInstance(((Object[]) value).length > 0, notEmptyAnno.message());
+            if (value instanceof List<?> && (lengthAnno == null || lengthAnno.min() == 0)
+                    && ((List<?>) value).size() == 0) {
+                result.addError(notEmptyAnno.message());
+            } else if (value instanceof Object[] && (lengthAnno == null || lengthAnno.min() == 0)
+                    && ((Object[]) value).length == 0) {
+                result.addError(notEmptyAnno.message());
+            } else if (value instanceof UUID && value.equals(emptyUuid())) {
+                result.addError(notEmptyAnno.message());
             }
+        }
+
+        NotContain notContainAnno = field.getAnnotation(NotContain.class);
+        if (notContainAnno != null && value != null) {
+            if (value instanceof String && ((String) value).contains(notContainAnno.value())) {
+                result.addError(notContainAnno.message());
+            } else if (value instanceof List<?> && ((List<?>) value).stream()
+                        .anyMatch(item -> item.toString().equals(notContainAnno.value()))) {
+                result.addError(notContainAnno.message());
+            } else if (value instanceof Object[] && Arrays.stream(((Object[]) value))
+                        .anyMatch(item -> item.toString().equals(notContainAnno.value()))) {
+                result.addError(notContainAnno.message());
+            }
+        }
+
+        Match matchAnno = field.getAnnotation(Match.class);
+        if (matchAnno != null && value != null & value instanceof String) {
+            Pattern pattern = matchAnno.caseSensitive() ? Pattern.compile(matchAnno.regex())
+                    : Pattern.compile(matchAnno.regex(), Pattern.CASE_INSENSITIVE);
+            Matcher matcher = pattern.matcher((String) value);
+            if(!matcher.find())
+                result.addError(matchAnno.message());
         }
 
         GreaterThan greaterThanAnno = field.getAnnotation(GreaterThan.class);
@@ -287,10 +327,10 @@ public class Helpers {
         }
 
         NotNull notNullAnno = field.getAnnotation(NotNull.class);
-        if (notNullAnno != null) {
-            return ValidationResult.getInstance(value != null, notNullAnno.message());
+        if (notNullAnno != null && value == null) {
+            result.addError(notNullAnno.message());
         }
-        return ValidationResult.validInstance();
+        return result;
     }
 
 }
