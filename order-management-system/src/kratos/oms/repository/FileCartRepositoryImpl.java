@@ -35,7 +35,8 @@ public class FileCartRepositoryImpl extends BaseFileRepository implements CartRe
                 .flatMap(c -> c.getItems().stream()).collect(Collectors.toList());
         try {
             this.write(DATA_FILE_NAME, carts);
-            this.write(DATA_ITEM_FILE_NAME, cartItems);
+            if(cartItems.size() > 0)
+                this.write(DATA_ITEM_FILE_NAME, cartItems);
             return true;
         } catch (IOException e) {
             Logger.printError(this.getClass().getName(), "addOrUpdate", e);

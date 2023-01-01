@@ -105,4 +105,16 @@ public class Account extends Domain<UUID> {
     public String getFullName() {
         return fullName;
     }
+
+    public void printDetail() {
+        System.out.printf("%-5s: %-10s \n", "Id", this.getId());
+        System.out.printf("%-5s: %-10s \n", "Username", this.getUsername());
+        System.out.printf("%-5s: %-10s \n", "Full Name", this.getFullName());
+        if (this.getProfile() == null)
+            return;
+        System.out.printf("%-5s: %-20s %-5s: %-10s \n", "Phone", Helpers.isNullOrEmpty(this.getProfile().getPhone()) ? "n/a" : this.getProfile().getPhone(),
+                "Email", Helpers.isNullOrEmpty(this.getProfile().getEmail()) ? "n/a" : this.getProfile().getEmail());
+        System.out.printf("%-5s: %-10s \n", "Address", Helpers.isNullOrEmpty(this.getProfile().getAddress())
+                ? "n/a" : this.getProfile().getAddress());
+    }
 }

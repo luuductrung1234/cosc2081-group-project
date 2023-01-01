@@ -11,6 +11,7 @@
 
 package kratos.oms.service;
 
+import kratos.oms.domain.Account;
 import kratos.oms.domain.Category;
 import kratos.oms.domain.Product;
 import kratos.oms.domain.Role;
@@ -18,6 +19,7 @@ import kratos.oms.model.account.CreateAccountModel;
 import kratos.oms.model.account.LoginModel;
 import kratos.oms.model.category.CreateCategoryModel;
 import kratos.oms.model.category.SearchCategoryModel;
+import kratos.oms.model.customer.SearchCustomerModel;
 import kratos.oms.model.product.CreateProductModel;
 import kratos.oms.model.product.UpdateProductModel;
 import kratos.oms.model.product.SearchProductModel;
@@ -58,7 +60,8 @@ public class MenuService {
                 Helpers.requestSelectAction(scanner, "Your choice [0-3]: ", new ArrayList<>() {{
                     add(new ActionOption<>("login", () -> loginScreen()));
                     add(new ActionOption<>("register as customer", () -> registrationScreen(Role.CUSTOMER)));
-                    add(new ActionOption<>("register as admin", () -> registrationScreen(Role.ADMIN)));
+                    // According to requirements, there is only 1 predefined admin account
+                    //add(new ActionOption<>("register as admin", () -> registrationScreen(Role.ADMIN)));
                     add(new ActionOption<>("exit", () -> exitScreen()));
                 }});
                 continue;
@@ -150,7 +153,7 @@ public class MenuService {
                         Helpers.requestDoubleInput(scanner, "Filter from price: ", "fromPrice", newSearchModel);
                         Helpers.requestDoubleInput(scanner, "Filter to price: ", "toPrice", newSearchModel);
                         Helpers.requestSelectValue(scanner, "Filter by category: ", categoryOptions, "categoryId", newSearchModel, 3);
-                        Helpers.requestStringInput(scanner, "Sort by field: ", "sortedBy", newSearchModel);
+                        Helpers.requestStringInput(scanner, "Sort by: ", "sortedBy", newSearchModel);
                         searchModel.set(newSearchModel);
                     } catch (RuntimeException e) {
                         Logger.printError(this.getClass().getName(), "productScreen", e);
@@ -263,7 +266,7 @@ public class MenuService {
         AtomicBoolean goBack = new AtomicBoolean(false);
         do {
             banner("category list");
-            List<Category> categories = categoryService.search(new SearchCategoryModel());
+            List<Category> categories = categoryService.search(searchModel.get());
 
             System.out.printf("search by name: %-5s\n", Helpers.isNullOrEmpty(searchModel.get().getName()) ? "n/a" : searchModel.get().getName());
 
@@ -315,9 +318,9 @@ public class MenuService {
             banner("category detail");
             category.printDetail();
 
-            List<ActionOption<Runnable>> actionOptions = new ArrayList<>();
-            if (authService.getPrincipal().getRole() == Role.ADMIN)
-                actionOptions.add(new ActionOption<>("delete category", () -> {
+            // only admin can access to this screen, so no need to check account's role
+            List<ActionOption<Runnable>> actionOptions = new ArrayList<>() {{
+                add(new ActionOption<>("delete category", () -> {
                     Boolean isDelete = Helpers.requestBooleanInput(scanner, "Do you want to delete this category [y/n]? ");
                     if (isDelete) {
                         categoryService.delete(category.getId());
@@ -325,8 +328,8 @@ public class MenuService {
                         goBack.set(true);
                     }
                 }));
-
-            actionOptions.add(new ActionOption<>("go back", () -> goBack.set(true)));
+                add(new ActionOption<>("go back", () -> goBack.set(true)));
+            }};
 
             Helpers.requestSelectAction(scanner, "Your choice [0-" + (actionOptions.size() - 1) + "]: ", actionOptions);
         } while (!goBack.get());
@@ -345,13 +348,79 @@ public class MenuService {
     }
 
     public void customerScreen() {
-        banner("customer list");
-        // TODO: implement
+        AtomicReference<SearchCustomerModel> searchModel = new AtomicReference<>(new SearchCustomerModel());
+        AtomicBoolean goBack = new AtomicBoolean(false);
+        do {
+            banner("customer list");
+            List<Account> customers = customerService.search(searchModel.get());
+
+            System.out.printf("search by name/phone/email: %-5s\n",
+                    Helpers.isNullOrEmpty(searchModel.get().getSearchText()) ? "n/a" : searchModel.get().getSearchText());
+            System.out.printf("sort by: %s\n\n",
+                    Helpers.isNullOrEmpty(searchModel.get().getSortedBy()) ? "n/a" : searchModel.get().getSortedBy());
+
+            System.out.printf("%-7s %-25s %-25s %-20s %-10s\n", "No.", "Username", "Name", "Phone", "Email");
+            System.out.println("-".repeat(100));
+            if (customers.isEmpty())
+                Logger.printInfo("No customer found...");
+            for (int customerNo = 0; customerNo < customers.size(); customerNo++) {
+                Account customer = customers.get(customerNo);
+                System.out.printf("%-7d %-25s %-25s %-20s %-10s\n", customerNo, customer.getUsername(), customer.getFullName(),
+                        customer.getProfile().getPhone(), customer.getProfile().getEmail());
+            }
+
+            List<ActionOption<Runnable>> actionOptions = new ArrayList<>() {{
+                add(new ActionOption<>("search", () -> {
+                    try {
+                        SearchCustomerModel newSearchModel = new SearchCustomerModel();
+                        Helpers.requestStringInput(scanner, "Search by name/phone/email: ", "searchText", newSearchModel);
+                        Helpers.requestStringInput(scanner, "Sort by: ", "sortedBy", newSearchModel);
+                        searchModel.set(newSearchModel);
+                    } catch (RuntimeException e) {
+                        Logger.printError(this.getClass().getName(), "productScreen", e);
+                    }
+                }));
+                add(new ActionOption<>("clear search", () -> searchModel.set(new SearchCustomerModel())));
+            }};
+
+            if (customers.size() > 0)
+                actionOptions.add(new ActionOption<>("view detail", () -> {
+                    int customerNo = Helpers.requestIntInput(scanner, "Enter customer No. to view detail: ", (value) -> {
+                        if (value < 0 || value >= customers.size()) {
+                            return ValidationResult.inValidInstance("Given customer No. is out of index.");
+                        }
+                        return ValidationResult.validInstance();
+                    });
+                    customerDetailScreen(customers.get(customerNo));
+                }));
+
+            Helpers.requestSelectAction(scanner,
+                    "Your choice [0-" + (actionOptions.size() - 1) + "]: ",
+                    addCommonActions(actionOptions, goBack));
+        } while (!goBack.get());
     }
 
-    public void customerDetailScreen() {
-        banner("customer detail");
-        // TODO: implement
+    public void customerDetailScreen(Account customer) {
+        AtomicBoolean goBack = new AtomicBoolean(false);
+        do {
+            banner("customer detail");
+            customer.printDetail();
+
+            // only admin can access to this screen, so no need to check account's role
+            List<ActionOption<Runnable>> actionOptions = new ArrayList<>() {{
+                add(new ActionOption<>("delete customer", () -> {
+                    Boolean isDelete = Helpers.requestBooleanInput(scanner, "Do you want to delete this customer [y/n]? ");
+                    if (isDelete) {
+                        customerService.delete(customer.getId());
+                        Logger.printSuccess("Delete customer successfully!");
+                        goBack.set(true);
+                    }
+                }));
+                add(new ActionOption<>("go back", () -> goBack.set(true)));
+            }};
+
+            Helpers.requestSelectAction(scanner, "Your choice [0-" + (actionOptions.size() - 1) + "]: ", actionOptions);
+        } while (!goBack.get());
     }
 
     public void orderScreen() {
@@ -393,7 +462,13 @@ public class MenuService {
         CreateAccountModel model = new CreateAccountModel();
         model.setRole(role);
         try {
-            Helpers.requestStringInput(scanner, "Enter your username: ", "username", model);
+            boolean isExisted;
+            do {
+                Helpers.requestStringInput(scanner, "Enter your username: ", "username", model);
+                isExisted = authService.isUsernameExisted(model.getUsername());
+                if (isExisted)
+                    Logger.printWarning("Username is already existed!");
+            } while (isExisted);
             Helpers.requestStringInput(scanner, "Enter your password: ", "password", model);
             Helpers.requestStringInput(scanner, "Enter your full name: ", "fullName", model);
             if (role == Role.CUSTOMER) {

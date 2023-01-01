@@ -141,11 +141,11 @@ public class Helpers {
     }
 
     public static <TClass> void requestStringInput(Scanner scanner, String label, String fieldName, TClass obj) throws RuntimeException {
-        requestInput(scanner, label, fieldName, (value) -> value, obj);
+        requestInput(scanner, label, fieldName, (value) -> Helpers.isNullOrEmpty(value) ? null : value, obj);
     }
 
     public static String requestStringInput(Scanner scanner, String label, Function<String, ValidationResult> validator) {
-        return requestInput(scanner, label, (value) -> value, validator);
+        return requestInput(scanner, label, (value) -> Helpers.isNullOrEmpty(value) ? null : value, validator);
     }
 
     public static <TClass> void requestIntInput(Scanner scanner, String label, String fieldName, TClass obj) throws RuntimeException {

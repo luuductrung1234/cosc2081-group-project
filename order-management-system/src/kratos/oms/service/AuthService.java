@@ -80,6 +80,10 @@ public class AuthService {
         }
     }
 
+    public boolean isUsernameExisted(String username) {
+        return accountRepository.findByUsername(username).isPresent();
+    }
+
     public Principal getPrincipal() {
         return principal;
     }
