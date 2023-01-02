@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.UUID;
 
 public class Cart extends Domain<UUID> {
-    private UUID accountId;
+    private final UUID accountId;
     private List<CartItem> items = new ArrayList<>();
     private double discount;
 

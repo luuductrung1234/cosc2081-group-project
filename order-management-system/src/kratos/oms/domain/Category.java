@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.UUID;
 
 public class Category extends Domain<UUID>{
-    private String name;
+    private final String name;
 
     public Category(UUID id, String name) {
         super(id);

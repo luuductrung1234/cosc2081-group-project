@@ -17,12 +17,12 @@ import java.util.List;
 import java.util.UUID;
 
 public class OrderItem extends Domain<UUID> {
-    private UUID orderId;
-    private UUID productId;
-    private String productName;
-    private double productPrice;
-    private String productCurrency;
-    private int quantity;
+    private final UUID orderId;
+    private final UUID productId;
+    private final String productName;
+    private final double productPrice;
+    private final String productCurrency;
+    private final int quantity;
 
     public OrderItem(UUID id, UUID orderId, UUID productId, String productName, double productPrice, String productCurrency, int quantity) {
         super(id);

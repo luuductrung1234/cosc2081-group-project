@@ -8,9 +8,9 @@ import java.util.UUID;
 
 public class CartItem extends Domain<UUID> {
 
-    private UUID cartId;
-    private UUID productId;
-    private String productName;
+    private final UUID cartId;
+    private final UUID productId;
+    private final String productName;
     private double productPrice;
     private String productCurrency;
     private int quantity;

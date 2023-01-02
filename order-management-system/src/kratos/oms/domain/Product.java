@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.UUID;
 
 public class Product extends Domain<UUID> {
-    private String name;
+    private final String name;
     private double price;
     private String currency;
     private Category category;
