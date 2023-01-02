@@ -1,5 +1,6 @@
 package kratos.oms.service;
 
+import kratos.oms.domain.Cart;
 import kratos.oms.domain.Order;
 import kratos.oms.model.order.SearchOrderModel;
 import kratos.oms.repository.OrderRepository;
@@ -21,5 +22,10 @@ public class OrderService {
 
     public Optional<Order> orderDetail(SearchOrderModel model) {
         return orderRepository.findById(model.getAccountId());
+    }
+
+    public boolean add(Cart cart) {
+        Order order = Order.getInstance(cart);
+        return orderRepository.add(order);
     }
 }

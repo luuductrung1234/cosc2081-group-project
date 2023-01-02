@@ -1,9 +1,12 @@
 package kratos.oms.service;
 
 import kratos.oms.domain.Account;
+import kratos.oms.domain.Membership;
+import kratos.oms.domain.Order;
 import kratos.oms.domain.Role;
 import kratos.oms.model.customer.SearchCustomerModel;
 import kratos.oms.repository.AccountRepository;
+import kratos.oms.repository.OrderRepository;
 
 import java.util.List;
 import java.util.Optional;
@@ -11,10 +14,18 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class CustomerService {
-    private final AccountRepository accountRepository;
+    private static final int SILVER_SPENDING = 5000000;
+    private static final int GOLD_SPENDING = 10000000;
+    private static final int PLATINUM_SPENDING = 25000000;
 
-    public CustomerService(AccountRepository accountRepository) {
+    private final AuthService authService;
+    private final AccountRepository accountRepository;
+    private final OrderRepository orderRepository;
+
+    public CustomerService(AuthService authService, AccountRepository accountRepository, OrderRepository orderRepository) {
+        this.authService = authService;
         this.accountRepository = accountRepository;
+        this.orderRepository = orderRepository;
     }
 
     public List<Account> search(SearchCustomerModel model) {
@@ -28,6 +39,27 @@ public class CustomerService {
         return accountRepository.listAll().stream()
                 .filter(a -> a.getRole().equals(Role.CUSTOMER))
                 .findFirst();
+    }
+
+    public Membership updateMembership() {
+        if (authService.getPrincipal().getRole() != Role.CUSTOMER)
+            throw new IllegalStateException("Logged in user not allow to calculate/update Membership");
+        double totalSpending = orderRepository.listAll().stream()
+                .filter(o -> o.getAccountId().equals(authService.getPrincipal().getId()))
+                .mapToDouble(Order::getTotalAmount).sum();
+        Membership newMembership = Membership.NONE;
+        if (totalSpending >= PLATINUM_SPENDING) {
+            newMembership = Membership.PLATINUM;
+        } else if (totalSpending >= GOLD_SPENDING) {
+            newMembership = Membership.GOLD;
+        } else if (totalSpending >= SILVER_SPENDING) {
+            newMembership = Membership.SILVER;
+        }
+        Account account = accountRepository.findByUsername(authService.getPrincipal().getUsername()).get();
+        account.setMembership(newMembership);
+        accountRepository.update(account);
+        authService.updateMembership(newMembership);
+        return newMembership;
     }
 
     public boolean delete(UUID id) {

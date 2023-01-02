@@ -11,6 +11,7 @@
 package kratos.oms.service;
 
 import kratos.oms.domain.Account;
+import kratos.oms.domain.Membership;
 import kratos.oms.domain.Profile;
 import kratos.oms.domain.Role;
 import kratos.oms.model.account.CreateAccountModel;
@@ -90,5 +91,11 @@ public class AuthService {
 
     public boolean isAuthenticated() {
         return principal != null;
+    }
+
+    public void updateMembership(Membership membership) {
+        if (this.principal.getMembership() != membership) {
+            this.principal.setMembership(membership);
+        }
     }
 }

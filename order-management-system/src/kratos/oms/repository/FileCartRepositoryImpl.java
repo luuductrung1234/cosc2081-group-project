@@ -2,6 +2,7 @@ package kratos.oms.repository;
 
 import kratos.oms.domain.Cart;
 import kratos.oms.domain.CartItem;
+import kratos.oms.domain.Product;
 import kratos.oms.seedwork.Logger;
 
 import java.io.IOException;
@@ -28,18 +29,35 @@ public class FileCartRepositoryImpl extends BaseFileRepository implements CartRe
     public boolean addOrUpdate(Cart cart) {
         List<Cart> carts = listAll();
         Optional<Cart> exitingCart = findByAccountId(cart.getAccountId());
-        if(exitingCart.isPresent())
+        if (exitingCart.isPresent())
             carts.removeIf(c -> c.getAccountId().equals(cart.getAccountId()));
         carts.add(cart);
         List<CartItem> cartItems = carts.stream()
                 .flatMap(c -> c.getItems().stream()).collect(Collectors.toList());
         try {
             this.write(DATA_FILE_NAME, carts);
-            if(cartItems.size() > 0)
-                this.write(DATA_ITEM_FILE_NAME, cartItems);
+            this.write(DATA_ITEM_FILE_NAME, cartItems);
             return true;
         } catch (IOException e) {
             Logger.printError(this.getClass().getName(), "addOrUpdate", e);
+            return false;
+        }
+    }
+
+    @Override
+    public boolean updateItems(Product product) {
+        try {
+            List<CartItem> items = this.read(DATA_ITEM_FILE_NAME, CartItem.class)
+                    .stream().filter(i -> i.getProductId().equals(product.getId())).collect(Collectors.toList());
+            if (items.isEmpty())
+                return true;
+            for (CartItem item : items) {
+                item.update(product.getPrice(), product.getCurrency());
+            }
+            this.write(DATA_ITEM_FILE_NAME, items);
+            return true;
+        } catch (IOException e) {
+            Logger.printError(this.getClass().getName(), "updateItems", e);
             return false;
         }
     }

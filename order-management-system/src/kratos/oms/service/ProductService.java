@@ -5,6 +5,7 @@ import kratos.oms.domain.Product;
 import kratos.oms.model.product.CreateProductModel;
 import kratos.oms.model.product.UpdateProductModel;
 import kratos.oms.model.product.SearchProductModel;
+import kratos.oms.repository.CartRepository;
 import kratos.oms.repository.CategoryRepository;
 import kratos.oms.repository.ProductRepository;
 
@@ -13,10 +14,12 @@ import java.util.*;
 public class ProductService {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
+    private final CartRepository cartRepository;
 
-    public ProductService(ProductRepository productRepository, CategoryRepository categoryRepository) {
+    public ProductService(ProductRepository productRepository, CategoryRepository categoryRepository, CartRepository cartRepository) {
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
+        this.cartRepository = cartRepository;
     }
 
     public List<Product> search(SearchProductModel searchModel) {
@@ -52,6 +55,7 @@ public class ProductService {
         product.setCurrency(model.getCurrency());
         product.setCategory(categoryOpt.get());
         productRepository.update(product);
+        cartRepository.updateItems(product);
         return product;
     }
 

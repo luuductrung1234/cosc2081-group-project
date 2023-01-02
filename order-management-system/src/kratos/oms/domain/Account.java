@@ -17,11 +17,11 @@ import java.util.List;
 import java.util.UUID;
 
 public class Account extends Domain<UUID> {
-    private String username;
-    private String hashedPassword;
+    private final String username;
+    private final String hashedPassword;
     private String fullName;
-    private Role role;
-    private Profile profile;
+    private final Role role;
+    private final Profile profile;
 
     public Account(UUID id, String username, String hashedPassword, String fullName, Role role, Profile profile) {
         super(id);

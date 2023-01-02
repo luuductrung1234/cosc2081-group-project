@@ -30,10 +30,10 @@ public class Main {
         // instantiate services
         AuthService authService = new AuthService(accountRepository);
         CartService cartService = new CartService(authService, cartRepository);
-        ProductService productService = new ProductService(productRepository, categoryRepository);
+        ProductService productService = new ProductService(productRepository, categoryRepository, cartRepository);
         OrderService orderService = new OrderService(orderRepository);
         CategoryService categoryService = new CategoryService(categoryRepository);
-        CustomerService customerService = new CustomerService(accountRepository);
+        CustomerService customerService = new CustomerService(authService, accountRepository, orderRepository);
 
         MenuService menuService = new MenuService(authService, cartService, productService, orderService, categoryService, customerService);
         menuService.welcomeScreen();

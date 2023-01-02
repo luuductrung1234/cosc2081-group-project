@@ -10,6 +10,10 @@ import java.util.Optional;
 import java.util.UUID;
 
 public class CartService {
+    private static final int SILVER_DISCOUNT = 5;
+    private static final int GOLD_DISCOUNT = 10;
+    private static final int PLATINUM_DISCOUNT = 15;
+
     private final AuthService authService;
     private final CartRepository cartRepository;
     private Cart cachedCart;
@@ -20,67 +24,81 @@ public class CartService {
     }
 
     public void addItem(Product product, int quantity) {
+        if(authService.getPrincipal().getRole() != Role.CUSTOMER)
+            throw new IllegalStateException("Logged in user is not allow to add item to cart");
         if (cachedCart == null)
             load();
         Optional<CartItem> itemOpt = cachedCart.getItems().stream()
                 .filter(item -> item.getProductId().equals(product.getId()))
                 .findFirst();
         if (itemOpt.isEmpty()) {
-            cachedCart.addItem(new CartItem(cachedCart.getId(), product.getId(), quantity));
+            cachedCart.addItem(new CartItem(cachedCart.getId(), product, quantity));
             return;
         }
         CartItem item = itemOpt.get();
-        item.increase(quantity);
+        item.setQuantity(item.getQuantity() + quantity);
+        cartRepository.addOrUpdate(cachedCart);
     }
 
-    public void removeItem(UUID productId, int quantity) {
+    public void updateItem(int index, int quantity) {
+        if(index < 0 || index >= cachedCart.getItems().size())
+            throw new IllegalArgumentException("Invalid cart item index");
+        if(authService.getPrincipal().getRole() != Role.CUSTOMER)
+            throw new IllegalStateException("Logged in user is not allow to update item in cart");
         if (cachedCart == null)
             load();
-        Optional<CartItem> itemOpt = cachedCart.getItems().stream().filter(item -> item.getProductId().equals(productId)).findFirst();
-        if (itemOpt.isEmpty())
-            return;
-        CartItem item = itemOpt.get();
-        if (quantity >= item.getQuantity()) {
-            removeItem(productId);
-            return;
-        }
-        item.decrease(quantity);
+        cachedCart.getItems().get(index).setQuantity(quantity);
+        cartRepository.addOrUpdate(cachedCart);
     }
 
-    public void removeItem(UUID productId) {
+    public void removeItem(int index) {
+        if(index < 0 || index >= cachedCart.getItems().size())
+            throw new IllegalArgumentException("Invalid cart item index");
+        if(authService.getPrincipal().getRole() != Role.CUSTOMER)
+            throw new IllegalStateException("Logged in user is not allow to remove item from cart");
         if (cachedCart == null)
             load();
-        cachedCart.getItems().removeIf(item -> item.getProductId().equals(productId));
+        cachedCart.getItems().remove(index);
+        cartRepository.addOrUpdate(cachedCart);
     }
 
     public void load() {
         if(authService.getPrincipal().getRole() != Role.CUSTOMER)
             return;
         UUID accountId = authService.getPrincipal().getId();
-        double discount = 0;
-        switch (authService.getPrincipal().getMembership()) {
-            case SILVER:
-                discount = 5;
-                break;
-            case GOLD:
-                discount = 10;
-                break;
-            case PLATINUM:
-                discount = 15;
-                break;
-        }
         cachedCart = cartRepository.findByAccountId(accountId)
-                .orElse(new Cart(accountId, discount));
+                .orElse(new Cart(accountId, getDiscount()));
+        cartRepository.addOrUpdate(cachedCart);
     }
 
-    public void save() {
+    public void reset() {
+        cachedCart.reset(getDiscount());
+        cartRepository.addOrUpdate(cachedCart);
+    }
+
+    public void unload() {
         if (cachedCart == null)
             return;
-        cartRepository.addOrUpdate(cachedCart);
         cachedCart = null;
     }
 
     public Cart getCachedCart() {
         return cachedCart;
+    }
+
+    private double getDiscount() {
+        double discount = 0;
+        switch (authService.getPrincipal().getMembership()) {
+            case SILVER:
+                discount = SILVER_DISCOUNT;
+                break;
+            case GOLD:
+                discount = GOLD_DISCOUNT;
+                break;
+            case PLATINUM:
+                discount = PLATINUM_DISCOUNT;
+                break;
+        }
+        return discount;
     }
 }
