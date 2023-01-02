@@ -25,10 +25,33 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Helpers {
+    /**
+     * Convert double to String with VND format
+     */
+    public static String toString(double value) {
+        return toString(value, "VND", false);
+    }
+
+    /**
+     * Convert double to String with specific currency format
+     */
+    public static String toString(double value, String currency, boolean includeCurrency) {
+        if ("VND".equals(currency)) {
+            return includeCurrency ? String.format("%,.0f (%s)", value, currency) : String.format("%,.0f", value);
+        }
+        return includeCurrency ? String.format("%.2f (%s)", value, currency) : String.format("%.2f", value);
+    }
+
+    /**
+     * Generate empty UUID
+     */
     public static UUID emptyUuid() {
         return UUID.fromString("00000000-0000-0000-0000-000000000000");
     }
 
+    /**
+     * Check String is null or empty
+     */
     public static boolean isNullOrEmpty(String str) {
         return str == null || str.trim().isEmpty();
     }
@@ -243,11 +266,11 @@ public class Helpers {
      * If the annotation was found, validate given value to satisfy the rule
      *
      * @param fieldName name of the field in clazz
-     * @param value value need to validate
-     * @param clazz the class contains a field named fieldName
+     * @param value     value need to validate
+     * @param clazz     the class contains a field named fieldName
+     * @param <TClass>  the class contains a field named fieldName
+     * @param <TField>  type of field
      * @return validation result
-     * @param <TClass> the class contains a field named fieldName
-     * @param <TField> type of field
      * @throws NoSuchFieldException no field found in TClass
      */
     private static <TClass, TField> ValidationResult validate(String fieldName, TField value, Class<TClass> clazz) throws NoSuchFieldException {
@@ -297,10 +320,10 @@ public class Helpers {
             if (value instanceof String && ((String) value).contains(notContainAnno.value())) {
                 result.addError(notContainAnno.message());
             } else if (value instanceof List<?> && ((List<?>) value).stream()
-                        .anyMatch(item -> item.toString().equals(notContainAnno.value()))) {
+                    .anyMatch(item -> item.toString().equals(notContainAnno.value()))) {
                 result.addError(notContainAnno.message());
             } else if (value instanceof Object[] && Arrays.stream(((Object[]) value))
-                        .anyMatch(item -> item.toString().equals(notContainAnno.value()))) {
+                    .anyMatch(item -> item.toString().equals(notContainAnno.value()))) {
                 result.addError(notContainAnno.message());
             }
         }
@@ -310,7 +333,7 @@ public class Helpers {
             Pattern pattern = matchAnno.caseSensitive() ? Pattern.compile(matchAnno.regex())
                     : Pattern.compile(matchAnno.regex(), Pattern.CASE_INSENSITIVE);
             Matcher matcher = pattern.matcher((String) value);
-            if(!matcher.find())
+            if (!matcher.find())
                 result.addError(matchAnno.message());
         }
 

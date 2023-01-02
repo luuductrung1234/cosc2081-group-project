@@ -6,9 +6,9 @@ import kratos.oms.domain.Role;
 import java.util.UUID;
 
 public class Principal {
-    private UUID id;
-    private String username;
-    private Role role;
+    private final UUID id;
+    private final String username;
+    private final Role role;
     private Membership membership;
 
     public Principal(UUID id, String username, Role role, Membership membership) {
@@ -32,5 +32,9 @@ public class Principal {
 
     public Membership getMembership() {
         return membership;
+    }
+
+    public void setMembership(Membership membership) {
+        this.membership = membership;
     }
 }

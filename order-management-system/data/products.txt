@@ -1,3 +1,3 @@
-91a1e68a-8171-4a19-a877-319eb261c2a9,Wooden Desk 2A01,199.0,USD,fad88005-1d53-4325-91b1-bd5a05c2e2ec,Furniture
-d9a910e4-cf1d-41ab-b23b-9f675ad91421,ViewSonic Monitor HD 24inch,250.0,USD,09ee8084-3ab9-4e3e-a59e-4b9284bd9802,Electronic
-b49d7046-835d-4b38-8be2-96f2ad93b820,Dell Inspiron 5990,980.0,USD,a585eceb-18a2-4595-acdd-af7a7017adbd,Laptop
+91a1e68a-8171-4a19-a877-319eb261c2a9,Wooden Desk 2A01,245000.0,VND,fad88005-1d53-4325-91b1-bd5a05c2e2ec,Furniture
+b49d7046-835d-4b38-8be2-96f2ad93b820,Dell Inspiron 5990,1.9499E7,VND,a585eceb-18a2-4595-acdd-af7a7017adbd,Laptop
+d9a910e4-cf1d-41ab-b23b-9f675ad91421,ViewSonic Monitor HD 24inch,3892000.0,VND,09ee8084-3ab9-4e3e-a59e-4b9284bd9802,Electronic
