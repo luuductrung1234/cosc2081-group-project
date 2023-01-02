@@ -92,9 +92,6 @@ public class MenuService {
                         add(new ActionOption<>("product list", () -> productScreen()));
                         add(new ActionOption<>("your cart", () -> cartScreen()));
                         add(new ActionOption<>("order list", () -> orderScreen()));
-                        add(new ActionOption<>("check membership", () -> {
-                            System.out.printf("Your membership is: %s%n", authService.getPrincipal().getMembership());
-                        }));
                         addAll(commonOptions);
                     }});
                     break;
@@ -105,7 +102,25 @@ public class MenuService {
     }
 
     public void profileScreen() {
-        banner("my profile");
+        AtomicBoolean goBack = new AtomicBoolean(false);
+        do {
+            banner("my profile");
+            Account currentAccount = authService.getCurrencyAccount();
+            currentAccount.printDetail();
+
+            List<ActionOption<Runnable>> actionOptions = new ArrayList<>() {{
+                add(new ActionOption<>("edit", () -> {
+                    editProfileScreen();
+                }));
+                add(new ActionOption<>("go back", () -> goBack.set(true)));
+            }};
+
+            Helpers.requestSelectAction(scanner, "Your choice [0-" + (actionOptions.size() - 1) + "]: ", actionOptions);
+        } while (!goBack.get());
+    }
+
+    public void editProfileScreen() {
+        banner("edit profile");
         // TODO: implement
     }
 
