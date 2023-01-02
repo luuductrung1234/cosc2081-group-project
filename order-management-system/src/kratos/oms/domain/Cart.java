@@ -1,6 +1,7 @@
 package kratos.oms.domain;
 
 import kratos.oms.seedwork.Helpers;
+import kratos.oms.seedwork.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +32,24 @@ public class Cart extends Domain<UUID> {
 
     public int getTotalCount() {
         return this.items.stream().mapToInt(CartItem::getQuantity).sum();
+    }
+
+    public void reset(double discount) {
+        this.discount = discount;
+        this.items = new ArrayList<>();
+    }
+
+    /**
+     * Get total amount in VND
+     */
+    public double getTotalAmount() {
+        double totalAmount = 0;
+        for (CartItem item : items) {
+            // TODO: convert price that currency is not VND
+            totalAmount += item.getProductPrice() * item.getQuantity();
+        }
+        totalAmount = (totalAmount * (100 - discount)) / 100;
+        return totalAmount;
     }
 
     @Override
@@ -72,5 +91,24 @@ public class Cart extends Domain<UUID> {
 
     public List<CartItem> getItems() {
         return items;
+    }
+
+    public void printDetail() {
+        System.out.printf("%-5s: %.2f%%\n", "Discount", this.getDiscount());
+        System.out.printf("You have %d item(s) in cart\n\n", this.getTotalCount());
+        System.out.printf("%-7s %-30s %-10s %-10s\n", "No.", "Product", "Quantity", "Price");
+        System.out.println("-".repeat(70));
+        if (items.isEmpty())
+            Logger.printInfo("empty cart, let's buy something...");
+        int itemNo = 0;
+        for (CartItem item : items) {
+            System.out.printf("%-7s %-30s %-10s %-10s\n", itemNo, item.getProductName(), item.getQuantity(),
+                    Helpers.toString(item.getProductPrice(), item.getProductCurrency(), true));
+            itemNo++;
+        }
+        System.out.println("-".repeat(70));
+        // VND by default
+        System.out.printf("%-38s %-10s %-10s\n", "", "Total:",
+                Helpers.toString(this.getTotalAmount(), "VND", true));
     }
 }

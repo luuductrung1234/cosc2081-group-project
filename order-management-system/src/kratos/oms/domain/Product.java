@@ -111,7 +111,7 @@ public class Product extends Domain<UUID> {
         System.out.printf("%-10s: %-10s \n", "Id", this.getId());
         System.out.printf("%-10s: %-10s \n", "Name", this.getName());
         System.out.printf("%-10s: %-10s \n", "Category", this.getCategory().getName());
-        System.out.printf("%-10s: %-10.2f \n", "Price", this.getPrice());
+        System.out.printf("%-10s: %-10s \n", "Price", Helpers.toString(this.getPrice(), this.getCurrency(), false));
         System.out.printf("%-10s: %-10s \n", "Currency", this.getCurrency());
     }
 }

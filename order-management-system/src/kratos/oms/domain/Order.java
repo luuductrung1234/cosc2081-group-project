@@ -16,13 +16,14 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class Order extends Domain<UUID> {
-    private UUID accountId;
+    private final UUID accountId;
     private OrderStatus status;
-    private List<OrderItem> items;
-    private double discount;
-    private Instant orderDate;
+    private final List<OrderItem> items;
+    private final double discount;
+    private final Instant orderDate;
     private String paidBy;
     private Instant paidOn;
     private String completedBy;
@@ -53,8 +54,12 @@ public class Order extends Domain<UUID> {
         this(UUID.randomUUID(), accountId, new ArrayList<>(), discount, Instant.now());
     }
 
-    public void addItem(OrderItem item) {
-        items.add(item);
+    public static Order getInstance(Cart cart) {
+        Order order = new Order(cart.getAccountId(), cart.getDiscount());
+        order.addItems(cart.getItems().stream().map(i ->
+                new OrderItem(order.getId(), i.getProductId(), i.getProductName(),
+                        i.getProductPrice(), i.getProductCurrency(), i.getQuantity())).collect(Collectors.toList()));
+        return order;
     }
 
     public void addItems(List<OrderItem> items) {
@@ -71,6 +76,23 @@ public class Order extends Domain<UUID> {
         this.status = OrderStatus.PAID;
         this.completedBy = completedBy;
         this.completedOn = Instant.now();
+    }
+
+    public int getTotalCount() {
+        return this.items.stream().mapToInt(OrderItem::getQuantity).sum();
+    }
+
+    /**
+     * Get total amount in VND
+     */
+    public double getTotalAmount() {
+        double totalAmount = 0;
+        for (OrderItem item : items) {
+            // TODO: convert price that currency is not VND
+            totalAmount += item.getProductPrice() * item.getQuantity();
+        }
+        totalAmount = (totalAmount * (100 - discount)) / 100;
+        return totalAmount;
     }
 
     @Override
@@ -159,5 +181,27 @@ public class Order extends Domain<UUID> {
 
     public Instant getOrderDate() {
         return orderDate;
+    }
+
+    public void printDetail() {
+        System.out.printf("%-5s: %.2f%%\n", "Discount", this.getDiscount());
+        System.out.printf("%-5s: %s\n", "Date", this.getOrderDate());
+        System.out.printf("%-5s: %-20s %-5s: %-20s\n", "Paid By", this.getPaidBy(),
+                "Paid On", this.getPaidOn());
+        System.out.printf("%-5s: %-20s %-5s: %-20s\n", "Completed By", this.getCompletedBy(),
+                "Completed On", this.getCompletedOn());
+        System.out.printf("There are %d item(s) in order\n\n", this.getTotalCount());
+        System.out.printf("%-7s %-30s %-10s %-10s\n", "No.", "Product", "Quantity", "Price");
+        System.out.println("-".repeat(70));
+        int itemNo = 0;
+        for (OrderItem item : items) {
+            System.out.printf("%-7s %-30s %-10s %-10s\n", itemNo, item.getProductName(), item.getQuantity(),
+                    Helpers.toString(item.getProductPrice(), item.getProductCurrency(), true));
+            itemNo++;
+        }
+        System.out.println("-".repeat(70));
+        // VND by default
+        System.out.printf("%-38s %-10s %-10s\n", "", "Total:",
+                Helpers.toString(this.getTotalAmount(), "VND", true));
     }
 }
