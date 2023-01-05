@@ -1,9 +1,6 @@
 package kratos.oms.service;
 
-import kratos.oms.domain.Account;
-import kratos.oms.domain.Membership;
-import kratos.oms.domain.Order;
-import kratos.oms.domain.Role;
+import kratos.oms.domain.*;
 import kratos.oms.model.customer.SearchCustomerModel;
 import kratos.oms.repository.AccountRepository;
 import kratos.oms.repository.OrderRepository;
@@ -35,17 +32,15 @@ public class CustomerService {
                 .collect(Collectors.toList());
     }
 
-    public Optional<Account> getDetail() {
+    public Optional<Account> getDetail(UUID customerId) {
         return accountRepository.listAll().stream()
-                .filter(a -> a.getRole().equals(Role.CUSTOMER))
+                .filter(a -> a.getRole().equals(Role.CUSTOMER) && a.getId().equals(customerId))
                 .findFirst();
     }
 
-    public Membership updateMembership() {
-        if (authService.getPrincipal().getRole() != Role.CUSTOMER)
-            throw new IllegalStateException("Logged in user not allow to calculate/update Membership");
+    public void updateMembership(UUID customerId) {
         double totalSpending = orderRepository.listAll().stream()
-                .filter(o -> o.getAccountId().equals(authService.getPrincipal().getId()))
+                .filter(o -> o.getAccountId().equals(customerId) && o.getStatus() == OrderStatus.PAID)
                 .mapToDouble(Order::getTotalAmount).sum();
         Membership newMembership = Membership.NONE;
         if (totalSpending >= PLATINUM_SPENDING) {
@@ -55,11 +50,9 @@ public class CustomerService {
         } else if (totalSpending >= SILVER_SPENDING) {
             newMembership = Membership.SILVER;
         }
-        Account account = accountRepository.findByUsername(authService.getPrincipal().getUsername()).get();
+        Account account = getDetail(customerId).get();
         account.setMembership(newMembership);
         accountRepository.update(account);
-        authService.updateMembership(newMembership);
-        return newMembership;
     }
 
     public boolean delete(UUID id) {
