@@ -27,6 +27,12 @@ public class Profile {
         this(phone, email, address, Membership.NONE);
     }
 
+    public void update(String phone, String email, String address) {
+        this.phone = phone == null ? this.phone : phone;
+        this.email = email;
+        this.address = address;
+    }
+
     public String getPhone() {
         return phone;
     }
