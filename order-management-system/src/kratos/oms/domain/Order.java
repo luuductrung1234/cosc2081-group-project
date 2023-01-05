@@ -11,6 +11,7 @@
 package kratos.oms.domain;
 
 import kratos.oms.seedwork.Helpers;
+import kratos.oms.seedwork.RandomString;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -19,6 +20,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class Order extends Domain<UUID> {
+    private final String code;
     private final UUID accountId;
     private OrderStatus status;
     private final List<OrderItem> items;
@@ -29,8 +31,9 @@ public class Order extends Domain<UUID> {
     private String completedBy;
     private Instant completedOn;
 
-    public Order(UUID uuid, UUID accountId, OrderStatus status, List<OrderItem> items, double discount, Instant orderDate, String paidBy, Instant paidOn, String completedBy, Instant completedOn) {
+    public Order(UUID uuid, String code, UUID accountId, OrderStatus status, List<OrderItem> items, double discount, Instant orderDate, String paidBy, Instant paidOn, String completedBy, Instant completedOn) {
         super(uuid);
+        this.code = code;
         this.accountId = accountId;
         this.status = status;
         this.items = items;
@@ -43,7 +46,7 @@ public class Order extends Domain<UUID> {
     }
 
     public Order(UUID id, UUID accountId, List<OrderItem> items, double discount, Instant orderDate) {
-        this(id, accountId, OrderStatus.CREATED, items, discount, orderDate, null, null, null, null);
+        this(id, RandomString.getEasyCode(), accountId, OrderStatus.CREATED, items, discount, orderDate, null, null, null, null);
     }
 
     public Order(UUID accountId, List<OrderItem> items, double discount, Instant orderDate) {
@@ -99,6 +102,7 @@ public class Order extends Domain<UUID> {
     public String serialize() {
         List<String> fields = new ArrayList<>() {{
             add(id.toString());
+            add(code);
             add(accountId.toString());
             add(status.toString());
             add(String.valueOf(discount));
@@ -120,31 +124,36 @@ public class Order extends Domain<UUID> {
     public static Order deserialize(String data) {
         if (Helpers.isNullOrEmpty(data))
             throw new IllegalArgumentException("data to deserialize should not be empty!");
-        String[] fields = data.split(",", 9);
+        String[] fields = data.split(",", 10);
         String paidBy = null;
         Instant paidOn = null;
         String completedBy = null;
         Instant completedOn = null;
-        if (!Helpers.isNullOrEmpty(fields[5]) && !Helpers.isNullOrEmpty(fields[6])) {
-            paidBy = fields[5];
-            paidOn = Instant.parse(fields[6]);
+        if (!Helpers.isNullOrEmpty(fields[6]) && !Helpers.isNullOrEmpty(fields[7])) {
+            paidBy = fields[6];
+            paidOn = Instant.parse(fields[7]);
         }
-        if (!Helpers.isNullOrEmpty(fields[7]) && !Helpers.isNullOrEmpty(fields[8])) {
-            completedBy = fields[7];
-            completedOn = Instant.parse(fields[8]);
+        if (!Helpers.isNullOrEmpty(fields[8]) && !Helpers.isNullOrEmpty(fields[9])) {
+            completedBy = fields[8];
+            completedOn = Instant.parse(fields[9]);
         }
         return new Order(UUID.fromString(fields[0]),
-                UUID.fromString(fields[1]),
-                OrderStatus.valueOf(fields[2]),
+                fields[1],
+                UUID.fromString(fields[2]),
+                OrderStatus.valueOf(fields[3]),
                 new ArrayList<>(),
-                Double.parseDouble(fields[3]),
-                Instant.parse(fields[4]),
+                Double.parseDouble(fields[4]),
+                Instant.parse(fields[5]),
                 paidBy, paidOn,
                 completedBy, completedOn);
     }
 
     public UUID getId() {
         return id;
+    }
+
+    public String getCode() {
+        return code;
     }
 
     public UUID getAccountId() {
@@ -184,11 +193,14 @@ public class Order extends Domain<UUID> {
     }
 
     public void printDetail() {
+        System.out.printf("%-5s: %s \n", "Id", this.getId());
+        System.out.printf("%-5s: %s \n", "Code", this.getCode());
+        System.out.printf("%-5s: %s\n", "Status", this.getStatus());
         System.out.printf("%-5s: %.2f%%\n", "Discount", this.getDiscount());
         System.out.printf("%-5s: %s\n", "Date", this.getOrderDate());
-        System.out.printf("%-5s: %-20s %-5s: %-20s\n", "Paid By", this.getPaidBy(),
+        System.out.printf("%-10s: %-20s %-10s: %-20s\n", "Paid By", this.getPaidBy(),
                 "Paid On", this.getPaidOn());
-        System.out.printf("%-5s: %-20s %-5s: %-20s\n", "Completed By", this.getCompletedBy(),
+        System.out.printf("%-10s: %-20s %-10s: %-20s\n", "Completed By", this.getCompletedBy(),
                 "Completed On", this.getCompletedOn());
         System.out.printf("There are %d item(s) in order\n\n", this.getTotalCount());
         System.out.printf("%-7s %-30s %-10s %-10s\n", "No.", "Product", "Quantity", "Price");

@@ -27,16 +27,16 @@ public class CartService {
         if(authService.getPrincipal().getRole() != Role.CUSTOMER)
             throw new IllegalStateException("Logged in user is not allow to add item to cart");
         if (cachedCart == null)
-            load();
+            throw new IllegalStateException("cache cart is not loaded");
         Optional<CartItem> itemOpt = cachedCart.getItems().stream()
                 .filter(item -> item.getProductId().equals(product.getId()))
                 .findFirst();
         if (itemOpt.isEmpty()) {
             cachedCart.addItem(new CartItem(cachedCart.getId(), product, quantity));
-            return;
+        } else {
+            CartItem item = itemOpt.get();
+            item.setQuantity(item.getQuantity() + quantity);
         }
-        CartItem item = itemOpt.get();
-        item.setQuantity(item.getQuantity() + quantity);
         cartRepository.addOrUpdate(cachedCart);
     }
 
@@ -46,7 +46,7 @@ public class CartService {
         if(authService.getPrincipal().getRole() != Role.CUSTOMER)
             throw new IllegalStateException("Logged in user is not allow to update item in cart");
         if (cachedCart == null)
-            load();
+            throw new IllegalStateException("cache cart is not loaded");
         cachedCart.getItems().get(index).setQuantity(quantity);
         cartRepository.addOrUpdate(cachedCart);
     }
@@ -57,7 +57,7 @@ public class CartService {
         if(authService.getPrincipal().getRole() != Role.CUSTOMER)
             throw new IllegalStateException("Logged in user is not allow to remove item from cart");
         if (cachedCart == null)
-            load();
+            throw new IllegalStateException("cache cart is not loaded");
         cachedCart.getItems().remove(index);
         cartRepository.addOrUpdate(cachedCart);
     }
@@ -66,8 +66,13 @@ public class CartService {
         if(authService.getPrincipal().getRole() != Role.CUSTOMER)
             return;
         UUID accountId = authService.getPrincipal().getId();
-        cachedCart = cartRepository.findByAccountId(accountId)
-                .orElse(new Cart(accountId, getDiscount()));
+        Optional<Cart> cart = cartRepository.findByAccountId(accountId);
+        if(cart.isPresent()) {
+            cachedCart = cart.get();
+            cachedCart.setDiscount(getDiscount());
+        }
+        else
+            cachedCart = new Cart(accountId, getDiscount());
         cartRepository.addOrUpdate(cachedCart);
     }
 

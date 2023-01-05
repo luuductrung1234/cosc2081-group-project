@@ -1,22 +1,29 @@
 package kratos.oms.model.order;
 
 import kratos.oms.domain.OrderStatus;
-import kratos.oms.model.SortDirection;
 
 import java.util.UUID;
 
 public class SearchOrderModel {
-    private UUID accountId;
+    private String code;
+    private UUID customerId;
     private OrderStatus status;
     private String sortedBy;
-    private SortDirection direction;
 
-    public UUID getAccountId() {
-        return accountId;
+    public String getCode() {
+        return code;
     }
 
-    public void setAccountId(UUID accountId) {
-        this.accountId = accountId;
+    public void setCode(String code) {
+        this.code = code;
+    }
+
+    public UUID getCustomerId() {
+        return customerId;
+    }
+
+    public void setCustomerId(UUID customerId) {
+        this.customerId = customerId;
     }
 
     public OrderStatus getStatus() {
@@ -33,13 +40,5 @@ public class SearchOrderModel {
 
     public void setSortedBy(String sortedBy) {
         this.sortedBy = sortedBy;
-    }
-
-    public SortDirection getDirection() {
-        return direction;
-    }
-
-    public void setDirection(SortDirection direction) {
-        this.direction = direction;
     }
 }

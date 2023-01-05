@@ -17,6 +17,7 @@ import kratos.oms.model.account.LoginModel;
 import kratos.oms.model.category.CreateCategoryModel;
 import kratos.oms.model.category.SearchCategoryModel;
 import kratos.oms.model.customer.SearchCustomerModel;
+import kratos.oms.model.order.SearchOrderModel;
 import kratos.oms.model.product.CreateProductModel;
 import kratos.oms.model.product.UpdateProductModel;
 import kratos.oms.model.product.SearchProductModel;
@@ -92,9 +93,6 @@ public class MenuService {
                         add(new ActionOption<>("product list", () -> productScreen()));
                         add(new ActionOption<>("your cart", () -> cartScreen()));
                         add(new ActionOption<>("order list", () -> orderScreen()));
-                        add(new ActionOption<>("check membership", () -> {
-                            System.out.printf("Your membership is: %s%n", authService.getPrincipal().getMembership());
-                        }));
                         addAll(commonOptions);
                     }});
                     break;
@@ -105,7 +103,25 @@ public class MenuService {
     }
 
     public void profileScreen() {
-        banner("my profile");
+        AtomicBoolean goBack = new AtomicBoolean(false);
+        do {
+            banner("my profile");
+            Account currentAccount = authService.getCurrencyAccount();
+            currentAccount.printDetail();
+
+            List<ActionOption<Runnable>> actionOptions = new ArrayList<>() {{
+                add(new ActionOption<>("edit", () -> {
+                    editProfileScreen();
+                }));
+                add(new ActionOption<>("go back", () -> goBack.set(true)));
+            }};
+
+            Helpers.requestSelectAction(scanner, "Your choice [0-" + (actionOptions.size() - 1) + "]: ", actionOptions);
+        } while (!goBack.get());
+    }
+
+    public void editProfileScreen() {
+        banner("edit profile");
         // TODO: implement
     }
 
@@ -162,12 +178,13 @@ public class MenuService {
                 add(new ActionOption<>("clear search", () -> searchModel.set(new SearchProductModel())));
             }};
 
-            if (authService.getPrincipal().getRole() == Role.ADMIN && !categories.isEmpty())
+            if (authService.getPrincipal().getRole() == Role.ADMIN && !categories.isEmpty()) {
                 // Only admin can add product
                 // There is at least 1 category to add product
                 actionOptions.add(new ActionOption<>("add product", () -> addOrUpdateProductScreen(null)));
+            }
 
-            if (products.size() > 0)
+            if (products.size() > 0) {
                 // There is at least 1 product to view detail
                 actionOptions.add(new ActionOption<>("view detail", () -> {
                     int productNo = Helpers.requestIntInput(scanner, "Enter product No. to view detail: ", (value) -> {
@@ -178,6 +195,20 @@ public class MenuService {
                     });
                     productDetailScreen(products.get(productNo).getId());
                 }));
+
+                if(authService.getPrincipal().getRole() == Role.CUSTOMER) {
+                    actionOptions.add(new ActionOption<>("add to cart", () -> {
+                        int productNo = Helpers.requestIntInput(scanner, "Enter product No. to add to cart: ", (value) -> {
+                            if (value < 0 || value >= products.size()) {
+                                return ValidationResult.inValidInstance("Given product No. is out of index.");
+                            }
+                            return ValidationResult.validInstance();
+                        });
+                        cartService.addItem(products.get(productNo), 1);
+                        Logger.printSuccess("Add item to cart successfully!");
+                    }));
+                }
+            }
 
             addCommonActions(actionOptions, goBack);
             Helpers.requestSelectAction(scanner, "Your choice [0-" + (actionOptions.size() - 1) + "]: ", actionOptions);
@@ -293,7 +324,7 @@ public class MenuService {
                         Helpers.requestStringInput(scanner, "Search by name: ", "name", newSearchModel);
                         searchModel.set(newSearchModel);
                     } catch (RuntimeException e) {
-                        Logger.printError(this.getClass().getName(), "productScreen", e);
+                        Logger.printError(this.getClass().getName(), "categoryScreen", e);
                     }
                 }));
                 add(new ActionOption<>("clear search", () -> searchModel.set(new SearchCategoryModel())));
@@ -383,7 +414,7 @@ public class MenuService {
                         Helpers.requestStringInput(scanner, "Sort by: ", "sortedBy", newSearchModel);
                         searchModel.set(newSearchModel);
                     } catch (RuntimeException e) {
-                        Logger.printError(this.getClass().getName(), "productScreen", e);
+                        Logger.printError(this.getClass().getName(), "customerScreen", e);
                     }
                 }));
                 add(new ActionOption<>("clear search", () -> searchModel.set(new SearchCustomerModel())));
@@ -441,11 +472,10 @@ public class MenuService {
                     add(new ActionOption<>("place order", () -> {
                         Boolean isPlaceOrder = Helpers.requestBooleanInput(scanner, "Do you want to submit order [y/n]? ");
                         if (isPlaceOrder) {
-                            if(!orderService.add(cart)){
+                            if (!orderService.add(cart)) {
                                 Logger.printWarning("Fail to submit order!");
                                 return;
                             }
-                            customerService.updateMembership();
                             cartService.reset();
                             Logger.printSuccess("Submit order successfully!");
                             goBack.set(true);
@@ -459,7 +489,7 @@ public class MenuService {
                             return ValidationResult.validInstance();
                         });
                         int quantity = Helpers.requestIntInput(scanner, "Enter quantity: ", (value) -> {
-                            if(value < 0)
+                            if (value < 0)
                                 return ValidationResult.inValidInstance("Quantity must not a negative number!");
                             return ValidationResult.validInstance();
                         });
@@ -482,13 +512,111 @@ public class MenuService {
     }
 
     public void orderScreen() {
-        banner("order list");
-        // TODO: implement
+        AtomicReference<SearchOrderModel> searchModel = new AtomicReference<>(new SearchOrderModel());
+        AtomicBoolean goBack = new AtomicBoolean(false);
+        do {
+            banner("order list");
+
+            if(authService.getPrincipal().getRole() == Role.CUSTOMER)
+                searchModel.get().setCustomerId(authService.getPrincipal().getId());
+
+            List<Order> orders = orderService.search(searchModel.get());
+            List<Account> customers = customerService.search(new SearchCustomerModel());
+
+            System.out.println("search by:");
+            System.out.printf("\tcode: %s\n",
+                    searchModel.get().getCode() == null ? "n/a" : searchModel.get().getCode());
+            // only allow Admin search order by customer
+            if (authService.getPrincipal().getRole() == Role.ADMIN) {
+                System.out.printf("\tcustomer: %s\n",
+                        searchModel.get().getCustomerId() == null ? "n/a" : customerService.getDetail(searchModel.get().getCustomerId()).get().getFullName());
+            }
+            System.out.printf("\tstatus: %s\n",
+                    searchModel.get().getStatus() == null ? "n/a" : searchModel.get().getStatus());
+            System.out.printf("sort by: %s\n\n",
+                    Helpers.isNullOrEmpty(searchModel.get().getSortedBy()) ? "n/a" : searchModel.get().getSortedBy());
+
+            System.out.printf("%-7s %-15s %-15s %-20s %-20s\n", "No.", "Code", "Status", "Total Amount", "Customer");
+            System.out.println("-".repeat(90));
+            if (orders.isEmpty())
+                Logger.printInfo("No order found...");
+            for (int orderNo = 0; orderNo < orders.size(); orderNo++) {
+                Order order = orders.get(orderNo);
+                Account customer = customers.stream().filter(c -> c.getId().equals(order.getAccountId())).findFirst().get();
+                System.out.printf("%-7s %-15s %-15s %-20s %-20s\n", orderNo, order.getCode(), order.getStatus(),
+                        Helpers.toString(order.getTotalAmount()), customer.getFullName());
+            }
+
+            List<ActionOption<Runnable>> actionOptions = new ArrayList<>() {{
+                add(new ActionOption<>("search", () -> {
+                    try {
+                        SearchOrderModel newSearchModel = new SearchOrderModel();
+
+                        Helpers.requestStringInput(scanner, "Filter by code: ", "code", newSearchModel);
+
+                        // only allow Admin search order by customer
+                        if (authService.getPrincipal().getRole() == Role.ADMIN) {
+                            List<ValueOption<UUID>> customerOptions = customers.stream()
+                                    .map(c -> new ValueOption<>(c.getFullName(), c.getId())).collect(Collectors.toList());
+                            customerOptions.add(new ValueOption<>("Skip", null));
+                            Helpers.requestSelectValue(scanner, "Filter by customer: ", customerOptions, "customerId", newSearchModel, 3);
+                        }
+
+                        Helpers.requestSelectValue(scanner, "Filter by status: ", new ArrayList<>() {{
+                            add(new ValueOption<>("Created", OrderStatus.CREATED));
+                            add(new ValueOption<>("Delivered", OrderStatus.DELIVERED));
+                            add(new ValueOption<>("Paid", OrderStatus.PAID));
+                            add(new ValueOption<>("Skip", null));
+                        }}, "status", newSearchModel, 3);
+
+                        Helpers.requestStringInput(scanner, "Sort by: ", "sortedBy", newSearchModel);
+                        searchModel.set(newSearchModel);
+                    } catch (RuntimeException e) {
+                        Logger.printError(this.getClass().getName(), "orderScreen", e);
+                    }
+                }));
+                add(new ActionOption<>("clear search", () -> searchModel.set(new SearchOrderModel())));
+            }};
+
+            if (orders.size() > 0) {
+                actionOptions.add(new ActionOption<>("view detail", () -> {
+                    int orderNo = Helpers.requestIntInput(scanner, "Enter order No. to view detail: ", (value) -> {
+                        if (value < 0 || value >= orders.size()) {
+                            return ValidationResult.inValidInstance("Given order No. is out of index.");
+                        }
+                        return ValidationResult.validInstance();
+                    });
+                    orderDetailScreen(orders.get(orderNo).getId());
+                }));
+            }
+
+            addCommonActions(actionOptions, goBack);
+            Helpers.requestSelectAction(scanner, "Your choice [0-" + (actionOptions.size() - 1) + "]: ", actionOptions);
+        } while (!goBack.get());
     }
 
-    public void orderDetailScreen() {
-        banner("order detail");
-        // TODO: implement
+    public void orderDetailScreen(UUID orderId) {
+        AtomicBoolean goBack = new AtomicBoolean(false);
+        do {
+            banner("order detail");
+            Order order = orderService.getDetail(orderId).get();
+            order.printDetail();
+
+            List<ActionOption<Runnable>> actionOptions = new ArrayList<>();
+            if(authService.getPrincipal().getRole() == Role.CUSTOMER && order.getStatus() == OrderStatus.CREATED) {
+                actionOptions.add(new ActionOption<>("paid", () -> {
+                    orderService.paid(orderId, authService.getPrincipal().getUsername());
+                }));
+            }
+            if(authService.getPrincipal().getRole() == Role.ADMIN && order.getStatus() == OrderStatus.DELIVERED) {
+                actionOptions.add(new ActionOption<>("complete", () -> {
+                    orderService.complete(orderId, authService.getPrincipal().getUsername());
+                    customerService.updateMembership(order.getAccountId());
+                }));
+            }
+            addCommonActions(actionOptions, goBack);
+            Helpers.requestSelectAction(scanner, "Your choice [0-" + (actionOptions.size() - 1) + "]: ", actionOptions);
+        } while (!goBack.get());
     }
 
     public void statisticScreen() {
