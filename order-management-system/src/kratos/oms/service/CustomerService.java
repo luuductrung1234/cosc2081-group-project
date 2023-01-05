@@ -1,9 +1,7 @@
 package kratos.oms.service;
 
-import kratos.oms.domain.Account;
-import kratos.oms.domain.Membership;
-import kratos.oms.domain.Order;
-import kratos.oms.domain.Role;
+import kratos.oms.domain.*;
+import kratos.oms.model.customer.UpdateProfileModel;
 import kratos.oms.model.customer.SearchCustomerModel;
 import kratos.oms.repository.AccountRepository;
 import kratos.oms.repository.OrderRepository;
@@ -39,6 +37,21 @@ public class CustomerService {
         return accountRepository.listAll().stream()
                 .filter(a -> a.getRole().equals(Role.CUSTOMER))
                 .findFirst();
+    }
+    public Optional<Account> getProfile(UUID id) {
+        return accountRepository.listAll().stream()
+                .filter(a -> a.getId().equals(id))
+                .findFirst();
+    }
+
+    public Account editProfile(UpdateProfileModel model) {
+        Optional<Account> accountOpt = accountRepository.listAll().stream().filter(a -> a.getId().equals(model.getId())).findFirst();
+        if(accountOpt.isEmpty())
+            throw new IllegalStateException("Account with id: " + model.getId() + " is not found!");
+        Account account = accountOpt.get();
+        account.updateProfile(model.getPhone(), model.getEmail(), model.getAddress());
+        accountRepository.update(account);
+        return account;
     }
 
     public Membership updateMembership() {

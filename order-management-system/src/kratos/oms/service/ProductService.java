@@ -10,6 +10,7 @@ import kratos.oms.repository.CategoryRepository;
 import kratos.oms.repository.ProductRepository;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class ProductService {
     private final ProductRepository productRepository;
@@ -23,8 +24,26 @@ public class ProductService {
     }
 
     public List<Product> search(SearchProductModel searchModel) {
-        // TODO: implement product searching
-        return productRepository.listAll();
+
+        List<Product> products= (ArrayList<Product>) productRepository.listAll();
+
+        products.stream().filter(a ->a.getName().contains(searchModel.getName())).collect(Collectors.toList());
+        products.stream().filter(a ->a.getPrice() >= searchModel.getFromPrice()).collect(Collectors.toList());
+        products.stream().filter(a ->a.getPrice() <= searchModel.getToPrice()).collect(Collectors.toList());
+        products.stream().filter(a->a.getCategory().equals(searchModel.getCategoryId())).collect(Collectors.toList());
+        if(searchModel.getSortedBy().equals("1")){
+            Collections.sort(products, (o1, o2) -> o2.getName().compareTo(o1.getName()));
+            Collections.sort(products, (o1, o2) -> (int) (o1.getPrice() - o2.getPrice())*1000);
+        }else if(searchModel.getSortedBy().equals("2")){
+            Collections.sort(products, (o1, o2) -> o2.getName().compareTo(o1.getName()));
+            Collections.sort(products, (o1, o2) -> - (int) (o1.getPrice() - o2.getPrice())*1000);
+        }else if(searchModel.getSortedBy().equals("3")){
+            Collections.sort(products, (o1, o2) -> (int) (o1.getPrice() - o2.getPrice())*1000);
+            Collections.sort(products, (o1, o2) -> o2.getName().compareTo(o1.getName()));
+        }else if(searchModel.getSortedBy().equals("4")){
+            Collections.sort(products, (o1, o2) -> (int) (o1.getPrice() - o2.getPrice())*1000);
+            Collections.sort(products, (o1, o2) -> o1.getName().compareTo(o2.getName()));}
+        return products;
     }
 
     public Optional<Product> getDetail(UUID productId) {

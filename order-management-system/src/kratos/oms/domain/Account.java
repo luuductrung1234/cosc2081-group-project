@@ -19,8 +19,14 @@ import java.util.UUID;
 public class Account extends Domain<UUID> {
     private final String username;
     private final String hashedPassword;
+    //    I need to be able to change the password as well right?
     private String fullName;
     private final Role role;
+
+    public void setFullName(String fullName) {
+        this.fullName = fullName;
+    }
+
     private final Profile profile;
 
     public Account(UUID id, String username, String hashedPassword, String fullName, Role role, Profile profile) {
@@ -42,6 +48,10 @@ public class Account extends Domain<UUID> {
 
     public void setMembership(Membership membership) {
         this.profile.setMembership(membership);
+    }
+
+    public void updateProfile(String phone, String email, String address) {
+        this.profile.update(phone, email, address);
     }
 
     @Override

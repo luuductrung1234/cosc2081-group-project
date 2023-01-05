@@ -10,6 +10,8 @@
 
 package kratos.oms.domain;
 
+import kratos.oms.seedwork.Helpers;
+
 public class Profile {
     private String phone;
     private String email;

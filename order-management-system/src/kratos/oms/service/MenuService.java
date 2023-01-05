@@ -17,6 +17,7 @@ import kratos.oms.model.account.LoginModel;
 import kratos.oms.model.category.CreateCategoryModel;
 import kratos.oms.model.category.SearchCategoryModel;
 import kratos.oms.model.customer.SearchCustomerModel;
+import kratos.oms.model.customer.UpdateProfileModel;
 import kratos.oms.model.product.CreateProductModel;
 import kratos.oms.model.product.UpdateProductModel;
 import kratos.oms.model.product.SearchProductModel;
@@ -106,7 +107,34 @@ public class MenuService {
 
     public void profileScreen() {
         banner("my profile");
+        if(authService.getPrincipal().getId().equals(null)){
+            throw new IllegalStateException("Please log in first to see the profile");
+        }
+        Optional<Account> profile=customerService.getProfile(authService.getPrincipal().getId());
+        System.out.println(profile.get().getFullName());
+        System.out.println(profile.get().getId());
+        System.out.println(profile.get().getRole());
+
         // TODO: implement
+    }
+    public void profileUpdateScreen(){
+        AtomicReference<UpdateProfileModel> profileModel = new AtomicReference<>(new UpdateProfileModel());
+
+        List<ActionOption<Runnable>> actionOptions = new ArrayList<>() {{
+            add(new ActionOption<>("edit", () -> {
+                try {
+                    UpdateProfileModel newUpdateProfileModel = new UpdateProfileModel();
+                    Helpers.requestStringInput(scanner, "Full Name : ", "name", newUpdateProfileModel);
+                    Helpers.requestStringInput(scanner, "New Address : ", "address", newUpdateProfileModel);
+                    Helpers.requestStringInput(scanner, "New Phone Number: ", "phoneNumber", newUpdateProfileModel);
+                    Helpers.requestStringInput(scanner, "New Email: ", "email", newUpdateProfileModel);
+//todo:                 password update?
+                    profileModel.set(newUpdateProfileModel);
+                } catch (RuntimeException e) {
+                    Logger.printError(this.getClass().getName(), "productScreen", e);
+                }
+            }));
+        }};
     }
 
     public void productScreen() {
@@ -148,12 +176,19 @@ public class MenuService {
                         List<ValueOption<UUID>> categoryOptions = categories.stream()
                                 .map(c -> new ValueOption<>(c.getName(), c.getId())).collect(Collectors.toList());
                         categoryOptions.add(new ValueOption<>("Skip", null));
+                        List<ValueOption<String>> sortOptions=new ArrayList<>();
+                        sortOptions.add(new ValueOption<>("1. Sort by name(Alphabetically)", "1"));
+                        sortOptions.add(new ValueOption<>("2. Sort by name(Reverse Alphabet)", "2"));
+                        sortOptions.add(new ValueOption<>("1. Sort by price(High to low)", "3"));
+                        sortOptions.add(new ValueOption<>("1. Sort by price(low to high)", "4"));
+
+
 
                         Helpers.requestStringInput(scanner, "Search by name: ", "name", newSearchModel);
                         Helpers.requestDoubleInput(scanner, "Filter from price: ", "fromPrice", newSearchModel);
                         Helpers.requestDoubleInput(scanner, "Filter to price: ", "toPrice", newSearchModel);
                         Helpers.requestSelectValue(scanner, "Filter by category: ", categoryOptions, "categoryId", newSearchModel, 3);
-                        Helpers.requestStringInput(scanner, "Sort by: ", "sortedBy", newSearchModel);
+                        Helpers.requestSelectValue(scanner, "Sort by: ", sortOptions,"sortedBy", newSearchModel);
                         searchModel.set(newSearchModel);
                     } catch (RuntimeException e) {
                         Logger.printError(this.getClass().getName(), "productScreen", e);
