@@ -84,7 +84,7 @@ public class Helpers {
                 System.out.println();
                 displayCount = 0;
             }
-            System.out.printf("\t[%d] %s", i, options.get(i).getLabel());
+            System.out.printf("[%d] %-20s", i, options.get(i).getLabel());
             displayCount++;
             if (i == (options.size() - 1))
                 System.out.println();

@@ -89,6 +89,10 @@ public class Cart extends Domain<UUID> {
         return discount;
     }
 
+    public void setDiscount(double discount) {
+        this.discount = discount;
+    }
+
     public List<CartItem> getItems() {
         return items;
     }
