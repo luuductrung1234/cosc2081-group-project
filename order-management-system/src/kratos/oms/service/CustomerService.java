@@ -2,6 +2,7 @@ package kratos.oms.service;
 
 import kratos.oms.domain.*;
 import kratos.oms.model.customer.SearchCustomerModel;
+import kratos.oms.model.customer.UpdateProfileModel;
 import kratos.oms.repository.AccountRepository;
 import kratos.oms.repository.OrderRepository;
 
@@ -50,9 +51,21 @@ public class CustomerService {
         } else if (totalSpending >= SILVER_SPENDING) {
             newMembership = Membership.SILVER;
         }
-        Account account = getDetail(customerId).get();
-        account.setMembership(newMembership);
-        accountRepository.update(account);
+        Optional<Account> customerOpt = getDetail(customerId);
+        if(customerOpt.isEmpty())
+            throw new IllegalStateException("Customer with id " + customerId + " is not found");
+        Account customer = customerOpt.get();
+        customer.setMembership(newMembership);
+        accountRepository.update(customer);
+    }
+
+    public void updateProfile(UpdateProfileModel model) {
+        Optional<Account> customerOpt = getDetail(model.getCustomerId());
+        if(customerOpt.isEmpty())
+            throw new IllegalStateException("Customer with id " + model.getCustomerId() + " is not found");
+        Account customer = customerOpt.get();
+        customer.update(model.getFullName(), model.getPhone(), model.getEmail(), model.getAddress());
+        accountRepository.update(customer);
     }
 
     public boolean delete(UUID id) {
