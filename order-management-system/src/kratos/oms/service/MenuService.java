@@ -109,13 +109,11 @@ public class MenuService {
             Account currentAccount = authService.getCurrencyAccount();
             currentAccount.printDetail();
 
-            List<ActionOption<Runnable>> actionOptions = new ArrayList<>() {{
-                add(new ActionOption<>("edit", () -> {
-                    editProfileScreen();
-                }));
-                add(new ActionOption<>("go back", () -> goBack.set(true)));
-            }};
-
+            List<ActionOption<Runnable>> actionOptions = new ArrayList<>();
+            // only customer need to edit profile
+            if(authService.getPrincipal().getRole() == Role.CUSTOMER)
+                actionOptions.add(new ActionOption<>("edit", this::editProfileScreen));
+            actionOptions.add(new ActionOption<>("go back", () -> goBack.set(true)));
             Helpers.requestSelectAction(scanner, "Your choice [0-" + (actionOptions.size() - 1) + "]: ", actionOptions);
         } while (!goBack.get());
     }
@@ -133,10 +131,10 @@ public class MenuService {
             List<Product> products = productService.search(searchModel.get());
             List<Category> categories = categoryService.search(new SearchCategoryModel());
 
+            Optional<Category> categoryOpt = categories.stream().filter(c -> c.getId().equals(searchModel.get().getCategoryId())).findFirst();
             System.out.printf("search by \n\t name: %-20s \n\t category: %-20s \n\t price from: %-5s \n\t price to: %-5s\n",
                     Helpers.isNullOrEmpty(searchModel.get().getName()) ? "n/a" : searchModel.get().getName(),
-                    searchModel.get().getCategoryId() == null ? "n/a" : categories.stream()
-                            .filter(c -> c.getId().equals(searchModel.get().getCategoryId())).findFirst().get().getName(),
+                    searchModel.get().getCategoryId() == null || categoryOpt.isEmpty() ? "n/a" : categoryOpt.get().getName(),
                     searchModel.get().getFromPrice() == null ? "n/a" : Helpers.toString(searchModel.get().getFromPrice()),
                     searchModel.get().getToPrice() == null ? "n/a" : Helpers.toString(searchModel.get().getToPrice()));
             System.out.printf("sort by: %s\n\n",
@@ -196,7 +194,7 @@ public class MenuService {
                     productDetailScreen(products.get(productNo).getId());
                 }));
 
-                if(authService.getPrincipal().getRole() == Role.CUSTOMER) {
+                if (authService.getPrincipal().getRole() == Role.CUSTOMER) {
                     actionOptions.add(new ActionOption<>("add to cart", () -> {
                         int productNo = Helpers.requestIntInput(scanner, "Enter product No. to add to cart: ", (value) -> {
                             if (value < 0 || value >= products.size()) {
@@ -517,7 +515,7 @@ public class MenuService {
         do {
             banner("order list");
 
-            if(authService.getPrincipal().getRole() == Role.CUSTOMER)
+            if (authService.getPrincipal().getRole() == Role.CUSTOMER)
                 searchModel.get().setCustomerId(authService.getPrincipal().getId());
 
             List<Order> orders = orderService.search(searchModel.get());
@@ -528,8 +526,9 @@ public class MenuService {
                     searchModel.get().getCode() == null ? "n/a" : searchModel.get().getCode());
             // only allow Admin search order by customer
             if (authService.getPrincipal().getRole() == Role.ADMIN) {
+                Optional<Account> customerOpt = customerService.getDetail(searchModel.get().getCustomerId());
                 System.out.printf("\tcustomer: %s\n",
-                        searchModel.get().getCustomerId() == null ? "n/a" : customerService.getDetail(searchModel.get().getCustomerId()).get().getFullName());
+                        searchModel.get().getCustomerId() == null || customerOpt.isEmpty() ? "n/a" : customerOpt.get().getFullName());
             }
             System.out.printf("\tstatus: %s\n",
                     searchModel.get().getStatus() == null ? "n/a" : searchModel.get().getStatus());
@@ -542,7 +541,10 @@ public class MenuService {
                 Logger.printInfo("No order found...");
             for (int orderNo = 0; orderNo < orders.size(); orderNo++) {
                 Order order = orders.get(orderNo);
-                Account customer = customers.stream().filter(c -> c.getId().equals(order.getAccountId())).findFirst().get();
+                Optional<Account> customerOpt = customers.stream().filter(c -> c.getId().equals(order.getAccountId())).findFirst();
+                if(customerOpt.isEmpty())
+                    throw new IllegalStateException("Customer with id " + order.getAccountId() + " is not found");
+                Account customer = customerOpt.get();
                 System.out.printf("%-7s %-15s %-15s %-20s %-20s\n", orderNo, order.getCode(), order.getStatus(),
                         Helpers.toString(order.getTotalAmount()), customer.getFullName());
             }
@@ -599,16 +601,19 @@ public class MenuService {
         AtomicBoolean goBack = new AtomicBoolean(false);
         do {
             banner("order detail");
-            Order order = orderService.getDetail(orderId).get();
+            Optional<Order> orderOpt = orderService.getDetail(orderId);
+            if(orderOpt.isEmpty())
+                throw new IllegalStateException("Order with id " + orderId + " is not found");
+            Order order = orderOpt.get();
             order.printDetail();
 
             List<ActionOption<Runnable>> actionOptions = new ArrayList<>();
-            if(authService.getPrincipal().getRole() == Role.CUSTOMER && order.getStatus() == OrderStatus.CREATED) {
+            if (authService.getPrincipal().getRole() == Role.CUSTOMER && order.getStatus() == OrderStatus.CREATED) {
                 actionOptions.add(new ActionOption<>("paid", () -> {
                     orderService.paid(orderId, authService.getPrincipal().getUsername());
                 }));
             }
-            if(authService.getPrincipal().getRole() == Role.ADMIN && order.getStatus() == OrderStatus.DELIVERED) {
+            if (authService.getPrincipal().getRole() == Role.ADMIN && order.getStatus() == OrderStatus.DELIVERED) {
                 actionOptions.add(new ActionOption<>("complete", () -> {
                     orderService.complete(orderId, authService.getPrincipal().getUsername());
                     customerService.updateMembership(order.getAccountId());
@@ -694,7 +699,7 @@ public class MenuService {
             exitScreen();
     }
 
-    private List<ActionOption<Runnable>> addCommonActions(List<ActionOption<Runnable>> actionOptions, AtomicBoolean goBack) {
+    private void addCommonActions(List<ActionOption<Runnable>> actionOptions, AtomicBoolean goBack) {
         actionOptions.addAll(new ArrayList<>() {{
             add(new ActionOption<>("go back", () -> goBack.set(true)));
             add(new ActionOption<>("logout", () -> {
@@ -706,7 +711,6 @@ public class MenuService {
             }));
             add(new ActionOption<>("exit", () -> exitScreen()));
         }});
-        return actionOptions;
     }
 
     private void banner(String title) {
