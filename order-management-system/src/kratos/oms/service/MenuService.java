@@ -17,6 +17,7 @@ import kratos.oms.model.account.LoginModel;
 import kratos.oms.model.category.CreateCategoryModel;
 import kratos.oms.model.category.SearchCategoryModel;
 import kratos.oms.model.customer.SearchCustomerModel;
+import kratos.oms.model.customer.UpdateProfileModel;
 import kratos.oms.model.order.SearchOrderModel;
 import kratos.oms.model.product.CreateProductModel;
 import kratos.oms.model.product.UpdateProductModel;
@@ -102,6 +103,9 @@ public class MenuService {
         }
     }
 
+    /**
+     * Display detail profile of logged in Account
+     */
     public void profileScreen() {
         AtomicBoolean goBack = new AtomicBoolean(false);
         do {
@@ -118,9 +122,40 @@ public class MenuService {
         } while (!goBack.get());
     }
 
+    /**
+     * Edit customer's profile
+     */
     public void editProfileScreen() {
         banner("edit profile");
-        // TODO: implement
+        Optional<Account> customerOpt = customerService.getDetail(authService.getPrincipal().getId());
+        if (customerOpt.isEmpty())
+            throw new IllegalStateException("Customer with id: " + authService.getPrincipal().getId() + " not found!");
+        Account customer = customerOpt.get();
+
+        UpdateProfileModel model = new UpdateProfileModel();
+        model.setCustomerId(customer.getId());
+
+        Logger.printInfo(String.format("Old full name: %s", customer.getFullName()));
+        Helpers.requestStringInput(scanner, "Enter full name: ", "fullName", model);
+        if (Helpers.isNullOrEmpty(model.getFullName()))
+            model.setFullName(customer.getFullName());
+
+        Logger.printInfo(String.format("Old phone: %s", customer.getProfile().getPhone()));
+        Helpers.requestStringInput(scanner, "Enter phone: ", "phone", model);
+        if (Helpers.isNullOrEmpty(model.getPhone()))
+            model.setPhone(customer.getProfile().getPhone());
+
+        Logger.printInfo(String.format("Old email: %s", customer.getProfile().getEmail()));
+        Helpers.requestStringInput(scanner, "Enter email: ", "email", model);
+        if (Helpers.isNullOrEmpty(model.getEmail()))
+            model.setEmail(customer.getProfile().getEmail());
+
+        Logger.printInfo(String.format("Old address: %s", customer.getProfile().getAddress()));
+        Helpers.requestStringInput(scanner, "Enter address: ", "address", model);
+        if (Helpers.isNullOrEmpty(model.getAddress()))
+            model.setAddress(customer.getProfile().getAddress());
+
+        customerService.updateProfile(model);
     }
 
     public void productScreen() {
@@ -224,9 +259,7 @@ public class MenuService {
 
             List<ActionOption<Runnable>> actionOptions = new ArrayList<>();
             if (authService.getPrincipal().getRole() == Role.ADMIN) {
-                actionOptions.add(new ActionOption<>("edit product", () -> {
-                    addOrUpdateProductScreen(productId);
-                }));
+                actionOptions.add(new ActionOption<>("edit product", () -> addOrUpdateProductScreen(productId)));
                 actionOptions.add(new ActionOption<>("delete product", () -> {
                     Boolean isDelete = Helpers.requestBooleanInput(scanner, "Do you want to delete this product [y/n]? ");
                     if (isDelete) {
@@ -257,7 +290,6 @@ public class MenuService {
                 Helpers.requestDoubleInput(scanner, "Enter product price: ", "price", model);
                 // VND by default
                 model.setCurrency("VND");
-                //Helpers.requestStringInput(scanner, "Enter product currency: ", "currency", model);
                 Helpers.requestSelectValue(scanner, "Enter product category: ",
                         categoryService.search(new SearchCategoryModel()).stream()
                                 .map(c -> new ValueOption<>(c.getName(), c.getId())).collect(Collectors.toList()),
@@ -278,10 +310,6 @@ public class MenuService {
                     model.setPrice(product.getPrice());
                 // VND by default
                 model.setCurrency("VND");
-                // Logger.printInfo(String.format("Old currency: %s", product.getCurrency()));
-                // Helpers.requestStringInput(scanner, "Enter product currency: ", "currency", model);
-                // if (model.getCurrency() == null)
-                //     model.setCurrency(product.getCurrency());
                 Logger.printInfo(String.format("Old category: %s", product.getCategory().getName()));
                 Helpers.requestSelectValue(scanner, "Enter product category: ",
                         categoryService.search(new SearchCategoryModel()).stream()

@@ -5,4 +5,4 @@ f8ed39b6-a42c-4c37-9aba-2441886903ee,admin,jGl25bVBBBW96Qi9Te4V37Fnqchz/Eu4qB9vK
 b9ec2f39-2f8d-42a8-b43d-14168e22d5af,customer5,Sj8m5RQv3O7gmxMkED1ishDnjCsjcQ9Q9wi47dr6noE=,Jenifer Lopez,CUSTOMER,1234567890,fdsaf@fdsafs,05 Merry Christmas# SP# Florida# US,NONE
 67fd0517-b7e7-4c59-91a6-9bdf91bd9e73,test02,XohImNooBHFR0OVvjcYpJ3NgPQ1qq73WKhHvch0VQtg=,Another Name,CUSTOMER,0834324234,,fdasf# fsadfsd# fsadfdsf,NONE
 b9669f77-75ae-47c0-b6c3-05b211e0142b,customer2,yMfLW56Pehs9HQJgKtpiMnEyOR2+Do7geRPNVQ7qHzs=,Alice Stephent,CUSTOMER,+0018472453,,,GOLD
-7bd458ea-8e61-4672-ad0e-209c12f674ea,customer,tsRYY4deNEh8o8FV7RRe/hKnRYHie+/sWqZhuO6Mpt0=,john doe,CUSTOMER,07734238584,test@email.com,,SILVER
+7bd458ea-8e61-4672-ad0e-209c12f674ea,customer,tsRYY4deNEh8o8FV7RRe/hKnRYHie+/sWqZhuO6Mpt0=,John Doe,CUSTOMER,07734238584,customer@email.com,,SILVER
