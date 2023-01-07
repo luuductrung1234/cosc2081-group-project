@@ -44,6 +44,11 @@ public class Account extends Domain<UUID> {
         this.profile.setMembership(membership);
     }
 
+    public void update(String fullName, String phone, String email, String address) {
+        this.fullName = Helpers.isNullOrEmpty(fullName) ? this.fullName : fullName;
+        this.profile.update(phone, email, address);
+    }
+
     @Override
     public String serialize() {
         List<String> fields = new ArrayList<>() {{

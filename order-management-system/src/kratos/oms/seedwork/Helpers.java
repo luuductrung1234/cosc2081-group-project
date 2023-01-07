@@ -297,8 +297,9 @@ public class Helpers {
         }
 
         NotBlank notBlankAnno = field.getAnnotation(NotBlank.class);
-        if (notBlankAnno != null && value != null & value instanceof String
-                && (lengthAnno == null || lengthAnno.min() == 0) && ((String) value).length() == 0) {
+        if ((notBlankAnno != null && value == null)
+                || (notBlankAnno != null && value instanceof String
+                    && (lengthAnno == null || lengthAnno.min() == 0) && ((String) value).length() == 0)) {
             result.addError(notBlankAnno.message());
         }
 
@@ -350,7 +351,7 @@ public class Helpers {
         }
 
         NotNull notNullAnno = field.getAnnotation(NotNull.class);
-        if (notNullAnno != null && value == null) {
+        if (notNullAnno != null && value == null && notBlankAnno == null) {
             result.addError(notNullAnno.message());
         }
         return result;
