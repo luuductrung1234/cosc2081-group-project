@@ -16,6 +16,7 @@ import kratos.oms.model.account.CreateAccountModel;
 import kratos.oms.model.account.LoginModel;
 import kratos.oms.model.category.CreateCategoryModel;
 import kratos.oms.model.category.SearchCategoryModel;
+import kratos.oms.model.customer.CustomerSort;
 import kratos.oms.model.customer.SearchCustomerModel;
 import kratos.oms.model.customer.UpdateProfileModel;
 import kratos.oms.model.order.SearchOrderModel;
@@ -420,7 +421,7 @@ public class MenuService {
             System.out.printf("search by name/phone/email: %-5s\n",
                     Helpers.isNullOrEmpty(searchModel.get().getSearchText()) ? "n/a" : searchModel.get().getSearchText());
             System.out.printf("sort by: %s\n\n",
-                    Helpers.isNullOrEmpty(searchModel.get().getSortedBy()) ? "n/a" : searchModel.get().getSortedBy());
+                    searchModel.get().getSortedBy() == null ? "n/a" : searchModel.get().getSortedBy());
 
             System.out.printf("%-7s %-25s %-25s %-20s %-10s\n", "No.", "Username", "Name", "Phone", "Email");
             System.out.println("-".repeat(100));
@@ -437,7 +438,10 @@ public class MenuService {
                     try {
                         SearchCustomerModel newSearchModel = new SearchCustomerModel();
                         Helpers.requestStringInput(scanner, "Search by name/phone/email: ", "searchText", newSearchModel);
-                        Helpers.requestStringInput(scanner, "Sort by: ", "sortedBy", newSearchModel);
+                        Helpers.requestSelectValue(scanner, "Sort by: ", new ArrayList<ValueOption<CustomerSort>>() {{
+                            add(new ValueOption<>(CustomerSort.NameAscending.toString(), CustomerSort.NameAscending));
+                            add(new ValueOption<>(CustomerSort.NameDescending.toString(), CustomerSort.NameDescending));
+                        }}, "sortedBy", newSearchModel, 2);
                         searchModel.set(newSearchModel);
                     } catch (RuntimeException e) {
                         Logger.printError(this.getClass().getName(), "customerScreen", e);
