@@ -21,6 +21,7 @@ import kratos.oms.model.customer.SearchCustomerModel;
 import kratos.oms.model.customer.UpdateProfileModel;
 import kratos.oms.model.order.SearchOrderModel;
 import kratos.oms.model.product.CreateProductModel;
+import kratos.oms.model.product.ProductSort;
 import kratos.oms.model.product.UpdateProductModel;
 import kratos.oms.model.product.SearchProductModel;
 import kratos.oms.seedwork.*;
@@ -174,7 +175,7 @@ public class MenuService {
                     searchModel.get().getFromPrice() == null ? "n/a" : Helpers.toString(searchModel.get().getFromPrice()),
                     searchModel.get().getToPrice() == null ? "n/a" : Helpers.toString(searchModel.get().getToPrice()));
             System.out.printf("sort by: %s\n\n",
-                    Helpers.isNullOrEmpty(searchModel.get().getSortedBy()) ? "n/a" : searchModel.get().getSortedBy());
+                    searchModel.get().getSortedBy() == null ? "n/a" : searchModel.get().getSortedBy());
 
             // TODO: maybe do it later, filter price in VND by default, then try to convert VND to any other currencies before searching?
 
@@ -195,15 +196,18 @@ public class MenuService {
                     try {
                         SearchProductModel newSearchModel = new SearchProductModel();
 
-                        List<ValueOption<UUID>> categoryOptions = categories.stream()
-                                .map(c -> new ValueOption<>(c.getName(), c.getId())).collect(Collectors.toList());
-                        categoryOptions.add(new ValueOption<>("Skip", null));
-
                         Helpers.requestStringInput(scanner, "Search by name: ", "name", newSearchModel);
                         Helpers.requestDoubleInput(scanner, "Filter from price: ", "fromPrice", newSearchModel);
                         Helpers.requestDoubleInput(scanner, "Filter to price: ", "toPrice", newSearchModel);
-                        Helpers.requestSelectValue(scanner, "Filter by category: ", categoryOptions, "categoryId", newSearchModel, 3);
-                        Helpers.requestStringInput(scanner, "Sort by: ", "sortedBy", newSearchModel);
+                        Helpers.requestSelectValue(scanner, "Filter by category: ",
+                                categories.stream().map(c -> new ValueOption<>(c.getName(), c.getId())).collect(Collectors.toList()),
+                                "categoryId", newSearchModel, 3);
+                        Helpers.requestSelectValue(scanner, "Sort by: ", new ArrayList<ValueOption<ProductSort>>() {{
+                            add(new ValueOption<>(ProductSort.NameAscending.toString(), ProductSort.NameAscending));
+                            add(new ValueOption<>(ProductSort.NameDescending.toString(), ProductSort.NameDescending));
+                            add(new ValueOption<>(ProductSort.PriceAscending.toString(), ProductSort.PriceAscending));
+                            add(new ValueOption<>(ProductSort.PriceDescending.toString(), ProductSort.PriceDescending));
+                        }}, "sortedBy", newSearchModel, 2);
                         searchModel.set(newSearchModel);
                     } catch (RuntimeException e) {
                         Logger.printError(this.getClass().getName(), "productScreen", e);
@@ -592,7 +596,6 @@ public class MenuService {
                         if (authService.getPrincipal().getRole() == Role.ADMIN) {
                             List<ValueOption<UUID>> customerOptions = customers.stream()
                                     .map(c -> new ValueOption<>(c.getFullName(), c.getId())).collect(Collectors.toList());
-                            customerOptions.add(new ValueOption<>("Skip", null));
                             Helpers.requestSelectValue(scanner, "Filter by customer: ", customerOptions, "customerId", newSearchModel, 3);
                         }
 
@@ -600,7 +603,6 @@ public class MenuService {
                             add(new ValueOption<>("Created", OrderStatus.CREATED));
                             add(new ValueOption<>("Delivered", OrderStatus.DELIVERED));
                             add(new ValueOption<>("Paid", OrderStatus.PAID));
-                            add(new ValueOption<>("Skip", null));
                         }}, "status", newSearchModel, 3);
 
                         Helpers.requestStringInput(scanner, "Sort by: ", "sortedBy", newSearchModel);

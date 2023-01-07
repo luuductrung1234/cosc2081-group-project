@@ -3,13 +3,17 @@ package kratos.oms.service;
 import kratos.oms.domain.Category;
 import kratos.oms.domain.Product;
 import kratos.oms.model.product.CreateProductModel;
+import kratos.oms.model.product.ProductSort;
 import kratos.oms.model.product.UpdateProductModel;
 import kratos.oms.model.product.SearchProductModel;
 import kratos.oms.repository.CartRepository;
 import kratos.oms.repository.CategoryRepository;
 import kratos.oms.repository.ProductRepository;
+import kratos.oms.seedwork.Helpers;
 
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class ProductService {
     private final ProductRepository productRepository;
@@ -22,9 +26,33 @@ public class ProductService {
         this.cartRepository = cartRepository;
     }
 
-    public List<Product> search(SearchProductModel searchModel) {
-        // TODO: implement product searching
-        return productRepository.listAll();
+    public List<Product> search(SearchProductModel model) {
+        Stream<Product> stream = productRepository.listAll().stream();
+        if(!Helpers.isNullOrEmpty(model.getName()))
+            stream = stream.filter(p -> p.getName().toUpperCase().contains(model.getName().toUpperCase()));
+        if(model.getFromPrice() != null)
+            stream = stream.filter(p -> p.getPrice() >= model.getFromPrice());
+        if(model.getToPrice() != null)
+            stream = stream.filter(p -> p.getPrice() <= model.getToPrice());
+        if(model.getCategoryId() != null)
+            stream = stream.filter(p -> p.getCategory().getId().equals(model.getCategoryId()));
+        if(model.getSortedBy() != null) {
+            switch (model.getSortedBy()) {
+                case NameAscending:
+                    stream = stream.sorted(Comparator.comparing(Product::getName));
+                    break;
+                case NameDescending:
+                    stream = stream.sorted(Comparator.comparing(Product::getName).reversed());
+                    break;
+                case PriceAscending:
+                    stream = stream.sorted(Comparator.comparingDouble(Product::getPrice));
+                    break;
+                case PriceDescending:
+                    stream = stream.sorted(Comparator.comparingDouble(Product::getPrice).reversed());
+                    break;
+            }
+        }
+        return stream.collect(Collectors.toList());
     }
 
     public Optional<Product> getDetail(UUID productId) {
