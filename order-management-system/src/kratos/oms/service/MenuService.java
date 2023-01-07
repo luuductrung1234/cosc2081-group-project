@@ -19,6 +19,7 @@ import kratos.oms.model.category.SearchCategoryModel;
 import kratos.oms.model.customer.CustomerSort;
 import kratos.oms.model.customer.SearchCustomerModel;
 import kratos.oms.model.customer.UpdateProfileModel;
+import kratos.oms.model.order.OrderSort;
 import kratos.oms.model.order.SearchOrderModel;
 import kratos.oms.model.product.CreateProductModel;
 import kratos.oms.model.product.ProductSort;
@@ -569,10 +570,10 @@ public class MenuService {
             System.out.printf("\tstatus: %s\n",
                     searchModel.get().getStatus() == null ? "n/a" : searchModel.get().getStatus());
             System.out.printf("sort by: %s\n\n",
-                    Helpers.isNullOrEmpty(searchModel.get().getSortedBy()) ? "n/a" : searchModel.get().getSortedBy());
+                    searchModel.get().getSortedBy() == null ? "n/a" : searchModel.get().getSortedBy());
 
-            System.out.printf("%-7s %-15s %-15s %-20s %-20s\n", "No.", "Code", "Status", "Total Amount", "Customer");
-            System.out.println("-".repeat(90));
+            System.out.printf("%-7s %-15s %-15s %-20s %-20s %-20s\n", "No.", "Code", "Status", "Total Amount", "Customer", "Date");
+            System.out.println("-".repeat(100));
             if (orders.isEmpty())
                 Logger.printInfo("No order found...");
             for (int orderNo = 0; orderNo < orders.size(); orderNo++) {
@@ -581,8 +582,8 @@ public class MenuService {
                 if(customerOpt.isEmpty())
                     throw new IllegalStateException("Customer with id " + order.getAccountId() + " is not found");
                 Account customer = customerOpt.get();
-                System.out.printf("%-7s %-15s %-15s %-20s %-20s\n", orderNo, order.getCode(), order.getStatus(),
-                        Helpers.toString(order.getTotalAmount()), customer.getFullName());
+                System.out.printf("%-7s %-15s %-15s %-20s %-20s %-20s\n", orderNo, order.getCode(), order.getStatus(),
+                        Helpers.toString(order.getTotalAmount()), customer.getFullName(), Helpers.toString(order.getOrderDate()));
             }
 
             List<ActionOption<Runnable>> actionOptions = new ArrayList<>() {{
@@ -605,7 +606,12 @@ public class MenuService {
                             add(new ValueOption<>("Paid", OrderStatus.PAID));
                         }}, "status", newSearchModel, 3);
 
-                        Helpers.requestStringInput(scanner, "Sort by: ", "sortedBy", newSearchModel);
+                        Helpers.requestSelectValue(scanner, "Sort by: ", new ArrayList<ValueOption<OrderSort>>() {{
+                            add(new ValueOption<>(OrderSort.DateAscending.toString(), OrderSort.DateAscending));
+                            add(new ValueOption<>(OrderSort.DateDescending.toString(), OrderSort.DateDescending));
+                            add(new ValueOption<>(OrderSort.AmountAscending.toString(), OrderSort.AmountAscending));
+                            add(new ValueOption<>(OrderSort.AmountDescending.toString(), OrderSort.AmountDescending));
+                        }}, "sortedBy", newSearchModel, 2);
                         searchModel.set(newSearchModel);
                     } catch (RuntimeException e) {
                         Logger.printError(this.getClass().getName(), "orderScreen", e);

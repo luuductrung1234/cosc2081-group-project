@@ -8,7 +8,7 @@ public class SearchOrderModel {
     private String code;
     private UUID customerId;
     private OrderStatus status;
-    private String sortedBy;
+    private OrderSort sortedBy;
 
     public String getCode() {
         return code;
@@ -34,11 +34,11 @@ public class SearchOrderModel {
         this.status = status;
     }
 
-    public String getSortedBy() {
+    public OrderSort getSortedBy() {
         return sortedBy;
     }
 
-    public void setSortedBy(String sortedBy) {
+    public void setSortedBy(OrderSort sortedBy) {
         this.sortedBy = sortedBy;
     }
 }

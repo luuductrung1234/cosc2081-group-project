@@ -197,7 +197,7 @@ public class Order extends Domain<UUID> {
         System.out.printf("%-5s: %s \n", "Code", this.getCode());
         System.out.printf("%-5s: %s\n", "Status", this.getStatus());
         System.out.printf("%-5s: %.2f%%\n", "Discount", this.getDiscount());
-        System.out.printf("%-5s: %s\n", "Date", this.getOrderDate());
+        System.out.printf("%-5s: %s\n", "Date", Helpers.toString(this.getOrderDate()));
         System.out.printf("%-10s: %-20s %-10s: %-20s\n", "Paid By", this.getPaidBy(),
                 "Paid On", this.getPaidOn());
         System.out.printf("%-10s: %-20s %-10s: %-20s\n", "Completed By", this.getCompletedBy(),
