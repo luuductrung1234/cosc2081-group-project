@@ -5,6 +5,7 @@ import kratos.oms.domain.Order;
 import kratos.oms.model.order.SearchOrderModel;
 import kratos.oms.repository.OrderRepository;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -19,18 +20,30 @@ public class OrderService {
     }
 
     public List<Order> search(SearchOrderModel model) {
-        List<Order> orders = orderRepository.listAll();
-        Stream<Order> orderStream = orders.stream();
+        Stream<Order> stream = orderRepository.listAll().stream();
         if(model.getCode() != null)
-            orderStream = orderStream.filter(o -> o.getCode().contains(model.getCode()));
+            stream = stream.filter(o -> o.getCode().contains(model.getCode()));
         if(model.getCustomerId() != null)
-            orderStream = orderStream.filter(o -> o.getAccountId().equals(model.getCustomerId()));
+            stream = stream.filter(o -> o.getAccountId().equals(model.getCustomerId()));
         if(model.getStatus() != null)
-            orderStream = orderStream.filter(o -> o.getStatus().equals(model.getStatus()));
-
-        // TODO: implement order sorting
-
-        return orderStream.collect(Collectors.toList());
+            stream = stream.filter(o -> o.getStatus().equals(model.getStatus()));
+        if(model.getSortedBy() != null) {
+            switch (model.getSortedBy()) {
+                case DateAscending:
+                    stream = stream.sorted(Comparator.comparing(Order::getOrderDate));
+                    break;
+                case DateDescending:
+                    stream = stream.sorted(Comparator.comparing(Order::getOrderDate).reversed());
+                    break;
+                case AmountAscending:
+                    stream = stream.sorted(Comparator.comparingDouble(Order::getTotalAmount));
+                    break;
+                case AmountDescending:
+                    stream = stream.sorted(Comparator.comparingDouble(Order::getTotalAmount).reversed());
+                    break;
+            }
+        }
+        return stream.collect(Collectors.toList());
     }
 
     public Optional<Order> getDetail(UUID orderId) {

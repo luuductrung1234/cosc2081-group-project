@@ -7,7 +7,7 @@ public class SearchProductModel {
     private Double fromPrice;
     private Double toPrice;
     private UUID categoryId;
-    private String sortedBy;
+    private ProductSort sortedBy;
 
     public String getName() {
         return name;
@@ -33,11 +33,11 @@ public class SearchProductModel {
         this.toPrice = toPrice;
     }
 
-    public String getSortedBy() {
+    public ProductSort getSortedBy() {
         return sortedBy;
     }
 
-    public void setSortedBy(String sortedBy) {
+    public void setSortedBy(ProductSort sortedBy) {
         this.sortedBy = sortedBy;
     }
 

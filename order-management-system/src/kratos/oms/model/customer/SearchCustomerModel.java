@@ -2,7 +2,7 @@ package kratos.oms.model.customer;
 
 public class SearchCustomerModel {
     private String searchText;
-    private String sortedBy;
+    private CustomerSort sortedBy;
 
     public String getSearchText() {
         return searchText;
@@ -12,11 +12,11 @@ public class SearchCustomerModel {
         this.searchText = searchText;
     }
 
-    public String getSortedBy() {
+    public CustomerSort getSortedBy() {
         return sortedBy;
     }
 
-    public void setSortedBy(String sortedBy) {
+    public void setSortedBy(CustomerSort sortedBy) {
         this.sortedBy = sortedBy;
     }
 }

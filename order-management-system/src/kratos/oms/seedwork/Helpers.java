@@ -8,6 +8,7 @@
   Acknowledgement:
     - Colin Hebert, "Check whether a String is not Null and not Empty", Stackoverflow, https://stackoverflow.com/a/3598792
     - Eduardo Dennis, "How to hash some String with SHA-256 in Java?", Stackoverflow, https://stackoverflow.com/a/43294412
+    - Abderrahim Azhrioun, "Format Instant to String in Java", Baeldung, https://www.baeldung.com/java-instant-to-string
 */
 
 package kratos.oms.seedwork;
@@ -18,6 +19,9 @@ import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -25,6 +29,15 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Helpers {
+    private static final String PATTERN_FORMAT = "dd/MM/yyyy";
+
+    public static String toString(Instant date) {
+        DateTimeFormatter formatter = DateTimeFormatter
+                .ofPattern(PATTERN_FORMAT)
+                .withZone(ZoneId.systemDefault());
+        return formatter.format(date);
+    }
+
     /**
      * Convert double to String with VND format
      */
@@ -73,7 +86,7 @@ public class Helpers {
         }
     }
 
-    public static <TOption extends InputOption> TOption requestSelect(Scanner scanner, String label, List<TOption> options, int maxCol) {
+    public static <TOption extends InputOption> Optional<TOption> requestSelect(Scanner scanner, String label, List<TOption> options, int maxCol) {
         System.out.println();
         if (options == null || options.size() == 0)
             throw new IllegalArgumentException("options is required");
@@ -92,12 +105,15 @@ public class Helpers {
         while (true) {
             System.out.print(label);
             try {
-                int choice = Integer.parseInt(scanner.nextLine());
+                String choiceStr = scanner.nextLine();
+                if(Helpers.isNullOrEmpty(choiceStr))
+                    return Optional.empty();
+                int choice = Integer.parseInt(choiceStr);
                 if (choice < 0 || choice >= options.size()) {
                     Logger.printWarning("There is no option [%d]", choice);
                     continue;
                 }
-                return options.get(choice);
+                return Optional.of(options.get(choice));
             } catch (NumberFormatException e) {
                 Logger.printWarning("Please enter a valid number!");
             }
@@ -110,7 +126,9 @@ public class Helpers {
 
     public static <TAction extends Runnable> void requestSelectAction(Scanner scanner, String label, List<ActionOption<TAction>> options, int maxCol) {
         var actionOpt = requestSelect(scanner, label, options, maxCol);
-        actionOpt.getAction().run();
+        if(actionOpt.isEmpty())
+            return;
+        actionOpt.get().getAction().run();
     }
 
     public static <TValue> TValue requestSelectValue(Scanner scanner, String label, List<ValueOption<TValue>> options) {
@@ -119,7 +137,9 @@ public class Helpers {
 
     public static <TValue> TValue requestSelectValue(Scanner scanner, String label, List<ValueOption<TValue>> options, int maxCol) {
         var valueOpt = requestSelect(scanner, label, options, maxCol);
-        return valueOpt.getValue();
+        if(valueOpt.isEmpty())
+            return null;
+        return valueOpt.get().getValue();
     }
 
     public static <TClass, TField> void requestSelectValue(Scanner scanner, String label, List<ValueOption<TField>> options, String fieldName, TClass obj) {
@@ -127,8 +147,20 @@ public class Helpers {
     }
 
     public static <TClass, TField> void requestSelectValue(Scanner scanner, String label, List<ValueOption<TField>> options, String fieldName, TClass obj, int maxCol) {
-        TField input = requestSelectValue(scanner, label, options, maxCol);
-        setInputToObject(fieldName, input, obj);
+        while (true) {
+            TField input = requestSelectValue(scanner, label, options, maxCol);
+            try {
+                ValidationResult validationResult = validate(fieldName, input, obj.getClass());
+                if(!validationResult.isValid()) {
+                    Logger.printWarning("Invalid! %s", validationResult.getErrorMessage());
+                    continue;
+                }
+                setInputToObject(fieldName, input, obj);
+                return;
+            } catch (NoSuchFieldException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     public static <TField> TField requestInput(Scanner scanner, String label,

@@ -5,32 +5,47 @@ import kratos.oms.model.customer.SearchCustomerModel;
 import kratos.oms.model.customer.UpdateProfileModel;
 import kratos.oms.repository.AccountRepository;
 import kratos.oms.repository.OrderRepository;
+import kratos.oms.seedwork.Helpers;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class CustomerService {
     private static final int SILVER_SPENDING = 5000000;
     private static final int GOLD_SPENDING = 10000000;
     private static final int PLATINUM_SPENDING = 25000000;
 
-    private final AuthService authService;
     private final AccountRepository accountRepository;
     private final OrderRepository orderRepository;
 
-    public CustomerService(AuthService authService, AccountRepository accountRepository, OrderRepository orderRepository) {
-        this.authService = authService;
+    public CustomerService(AccountRepository accountRepository, OrderRepository orderRepository) {
         this.accountRepository = accountRepository;
         this.orderRepository = orderRepository;
     }
 
     public List<Account> search(SearchCustomerModel model) {
-        // TODO: implement customer searching
-        return accountRepository.listAll().stream()
-                .filter(a -> a.getRole().equals(Role.CUSTOMER))
-                .collect(Collectors.toList());
+        Stream<Account> stream = accountRepository.listAll().stream().filter(a -> a.getRole().equals(Role.CUSTOMER));
+        if(!Helpers.isNullOrEmpty(model.getSearchText())) {
+            String searchText = model.getSearchText().toUpperCase();
+            stream = stream.filter(c -> c.getFullName().toUpperCase().contains(searchText)
+                    || (c.getProfile().getPhone() != null && c.getProfile().getPhone().toUpperCase().contains(searchText))
+                    || (c.getProfile().getEmail() != null && c.getProfile().getEmail().toUpperCase().contains(searchText)));
+        }
+        if(model.getSortedBy() != null) {
+            switch (model.getSortedBy()) {
+                case NameAscending:
+                    stream = stream.sorted(Comparator.comparing(Account::getFullName));
+                    break;
+                case NameDescending:
+                    stream = stream.sorted(Comparator.comparing(Account::getFullName).reversed());
+                    break;
+            }
+        }
+        return stream.collect(Collectors.toList());
     }
 
     public Optional<Account> getDetail(UUID customerId) {

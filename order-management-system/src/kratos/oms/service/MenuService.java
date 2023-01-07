@@ -16,10 +16,13 @@ import kratos.oms.model.account.CreateAccountModel;
 import kratos.oms.model.account.LoginModel;
 import kratos.oms.model.category.CreateCategoryModel;
 import kratos.oms.model.category.SearchCategoryModel;
+import kratos.oms.model.customer.CustomerSort;
 import kratos.oms.model.customer.SearchCustomerModel;
 import kratos.oms.model.customer.UpdateProfileModel;
+import kratos.oms.model.order.OrderSort;
 import kratos.oms.model.order.SearchOrderModel;
 import kratos.oms.model.product.CreateProductModel;
+import kratos.oms.model.product.ProductSort;
 import kratos.oms.model.product.UpdateProductModel;
 import kratos.oms.model.product.SearchProductModel;
 import kratos.oms.seedwork.*;
@@ -173,7 +176,7 @@ public class MenuService {
                     searchModel.get().getFromPrice() == null ? "n/a" : Helpers.toString(searchModel.get().getFromPrice()),
                     searchModel.get().getToPrice() == null ? "n/a" : Helpers.toString(searchModel.get().getToPrice()));
             System.out.printf("sort by: %s\n\n",
-                    Helpers.isNullOrEmpty(searchModel.get().getSortedBy()) ? "n/a" : searchModel.get().getSortedBy());
+                    searchModel.get().getSortedBy() == null ? "n/a" : searchModel.get().getSortedBy());
 
             // TODO: maybe do it later, filter price in VND by default, then try to convert VND to any other currencies before searching?
 
@@ -194,15 +197,18 @@ public class MenuService {
                     try {
                         SearchProductModel newSearchModel = new SearchProductModel();
 
-                        List<ValueOption<UUID>> categoryOptions = categories.stream()
-                                .map(c -> new ValueOption<>(c.getName(), c.getId())).collect(Collectors.toList());
-                        categoryOptions.add(new ValueOption<>("Skip", null));
-
                         Helpers.requestStringInput(scanner, "Search by name: ", "name", newSearchModel);
                         Helpers.requestDoubleInput(scanner, "Filter from price: ", "fromPrice", newSearchModel);
                         Helpers.requestDoubleInput(scanner, "Filter to price: ", "toPrice", newSearchModel);
-                        Helpers.requestSelectValue(scanner, "Filter by category: ", categoryOptions, "categoryId", newSearchModel, 3);
-                        Helpers.requestStringInput(scanner, "Sort by: ", "sortedBy", newSearchModel);
+                        Helpers.requestSelectValue(scanner, "Filter by category: ",
+                                categories.stream().map(c -> new ValueOption<>(c.getName(), c.getId())).collect(Collectors.toList()),
+                                "categoryId", newSearchModel, 3);
+                        Helpers.requestSelectValue(scanner, "Sort by: ", new ArrayList<ValueOption<ProductSort>>() {{
+                            add(new ValueOption<>(ProductSort.NameAscending.toString(), ProductSort.NameAscending));
+                            add(new ValueOption<>(ProductSort.NameDescending.toString(), ProductSort.NameDescending));
+                            add(new ValueOption<>(ProductSort.PriceAscending.toString(), ProductSort.PriceAscending));
+                            add(new ValueOption<>(ProductSort.PriceDescending.toString(), ProductSort.PriceDescending));
+                        }}, "sortedBy", newSearchModel, 2);
                         searchModel.set(newSearchModel);
                     } catch (RuntimeException e) {
                         Logger.printError(this.getClass().getName(), "productScreen", e);
@@ -420,7 +426,7 @@ public class MenuService {
             System.out.printf("search by name/phone/email: %-5s\n",
                     Helpers.isNullOrEmpty(searchModel.get().getSearchText()) ? "n/a" : searchModel.get().getSearchText());
             System.out.printf("sort by: %s\n\n",
-                    Helpers.isNullOrEmpty(searchModel.get().getSortedBy()) ? "n/a" : searchModel.get().getSortedBy());
+                    searchModel.get().getSortedBy() == null ? "n/a" : searchModel.get().getSortedBy());
 
             System.out.printf("%-7s %-25s %-25s %-20s %-10s\n", "No.", "Username", "Name", "Phone", "Email");
             System.out.println("-".repeat(100));
@@ -437,7 +443,10 @@ public class MenuService {
                     try {
                         SearchCustomerModel newSearchModel = new SearchCustomerModel();
                         Helpers.requestStringInput(scanner, "Search by name/phone/email: ", "searchText", newSearchModel);
-                        Helpers.requestStringInput(scanner, "Sort by: ", "sortedBy", newSearchModel);
+                        Helpers.requestSelectValue(scanner, "Sort by: ", new ArrayList<ValueOption<CustomerSort>>() {{
+                            add(new ValueOption<>(CustomerSort.NameAscending.toString(), CustomerSort.NameAscending));
+                            add(new ValueOption<>(CustomerSort.NameDescending.toString(), CustomerSort.NameDescending));
+                        }}, "sortedBy", newSearchModel, 2);
                         searchModel.set(newSearchModel);
                     } catch (RuntimeException e) {
                         Logger.printError(this.getClass().getName(), "customerScreen", e);
@@ -561,10 +570,10 @@ public class MenuService {
             System.out.printf("\tstatus: %s\n",
                     searchModel.get().getStatus() == null ? "n/a" : searchModel.get().getStatus());
             System.out.printf("sort by: %s\n\n",
-                    Helpers.isNullOrEmpty(searchModel.get().getSortedBy()) ? "n/a" : searchModel.get().getSortedBy());
+                    searchModel.get().getSortedBy() == null ? "n/a" : searchModel.get().getSortedBy());
 
-            System.out.printf("%-7s %-15s %-15s %-20s %-20s\n", "No.", "Code", "Status", "Total Amount", "Customer");
-            System.out.println("-".repeat(90));
+            System.out.printf("%-7s %-15s %-15s %-20s %-20s %-20s\n", "No.", "Code", "Status", "Total Amount", "Customer", "Date");
+            System.out.println("-".repeat(100));
             if (orders.isEmpty())
                 Logger.printInfo("No order found...");
             for (int orderNo = 0; orderNo < orders.size(); orderNo++) {
@@ -573,8 +582,8 @@ public class MenuService {
                 if(customerOpt.isEmpty())
                     throw new IllegalStateException("Customer with id " + order.getAccountId() + " is not found");
                 Account customer = customerOpt.get();
-                System.out.printf("%-7s %-15s %-15s %-20s %-20s\n", orderNo, order.getCode(), order.getStatus(),
-                        Helpers.toString(order.getTotalAmount()), customer.getFullName());
+                System.out.printf("%-7s %-15s %-15s %-20s %-20s %-20s\n", orderNo, order.getCode(), order.getStatus(),
+                        Helpers.toString(order.getTotalAmount()), customer.getFullName(), Helpers.toString(order.getOrderDate()));
             }
 
             List<ActionOption<Runnable>> actionOptions = new ArrayList<>() {{
@@ -588,7 +597,6 @@ public class MenuService {
                         if (authService.getPrincipal().getRole() == Role.ADMIN) {
                             List<ValueOption<UUID>> customerOptions = customers.stream()
                                     .map(c -> new ValueOption<>(c.getFullName(), c.getId())).collect(Collectors.toList());
-                            customerOptions.add(new ValueOption<>("Skip", null));
                             Helpers.requestSelectValue(scanner, "Filter by customer: ", customerOptions, "customerId", newSearchModel, 3);
                         }
 
@@ -596,10 +604,14 @@ public class MenuService {
                             add(new ValueOption<>("Created", OrderStatus.CREATED));
                             add(new ValueOption<>("Delivered", OrderStatus.DELIVERED));
                             add(new ValueOption<>("Paid", OrderStatus.PAID));
-                            add(new ValueOption<>("Skip", null));
                         }}, "status", newSearchModel, 3);
 
-                        Helpers.requestStringInput(scanner, "Sort by: ", "sortedBy", newSearchModel);
+                        Helpers.requestSelectValue(scanner, "Sort by: ", new ArrayList<ValueOption<OrderSort>>() {{
+                            add(new ValueOption<>(OrderSort.DateAscending.toString(), OrderSort.DateAscending));
+                            add(new ValueOption<>(OrderSort.DateDescending.toString(), OrderSort.DateDescending));
+                            add(new ValueOption<>(OrderSort.AmountAscending.toString(), OrderSort.AmountAscending));
+                            add(new ValueOption<>(OrderSort.AmountDescending.toString(), OrderSort.AmountDescending));
+                        }}, "sortedBy", newSearchModel, 2);
                         searchModel.set(newSearchModel);
                     } catch (RuntimeException e) {
                         Logger.printError(this.getClass().getName(), "orderScreen", e);
