@@ -8,6 +8,7 @@
   Acknowledgement:
     - Colin Hebert, "Check whether a String is not Null and not Empty", Stackoverflow, https://stackoverflow.com/a/3598792
     - Eduardo Dennis, "How to hash some String with SHA-256 in Java?", Stackoverflow, https://stackoverflow.com/a/43294412
+    - Abderrahim Azhrioun, "Format Instant to String in Java", Baeldung, https://www.baeldung.com/java-instant-to-string
 */
 
 package kratos.oms.seedwork;
@@ -18,6 +19,9 @@ import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -25,6 +29,15 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Helpers {
+    private static final String PATTERN_FORMAT = "dd/MM/yyyy";
+
+    public static String toString(Instant date) {
+        DateTimeFormatter formatter = DateTimeFormatter
+                .ofPattern(PATTERN_FORMAT)
+                .withZone(ZoneId.systemDefault());
+        return formatter.format(date);
+    }
+
     /**
      * Convert double to String with VND format
      */
