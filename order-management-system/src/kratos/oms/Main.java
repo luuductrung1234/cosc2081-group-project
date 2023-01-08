@@ -34,8 +34,10 @@ public class Main {
         OrderService orderService = new OrderService(orderRepository);
         CategoryService categoryService = new CategoryService(categoryRepository);
         CustomerService customerService = new CustomerService(accountRepository, orderRepository);
+        StatisticService statisticService = new StatisticService(orderRepository, productRepository);
 
-        MenuService menuService = new MenuService(authService, cartService, productService, orderService, categoryService, customerService);
+        MenuService menuService = new MenuService(authService, cartService, productService,
+                orderService, categoryService, customerService, statisticService);
         menuService.welcomeScreen();
     }
 

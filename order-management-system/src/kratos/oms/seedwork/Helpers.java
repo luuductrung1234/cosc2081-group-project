@@ -16,11 +16,12 @@ package kratos.oms.seedwork;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.time.Instant;
-import java.time.ZoneId;
+import java.text.DecimalFormat;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
@@ -36,6 +37,14 @@ public class Helpers {
                 .ofPattern(PATTERN_FORMAT)
                 .withZone(ZoneId.systemDefault());
         return formatter.format(date);
+    }
+
+    /**
+     * Convert bigDecimal to String with VND format
+     */
+    public static String toString(BigDecimal value) {
+        DecimalFormat decimalFormat = new DecimalFormat("#,###");
+        return String.format("%s (%s)", decimalFormat.format(value), "VND");
     }
 
     /**
@@ -106,7 +115,7 @@ public class Helpers {
             System.out.print(label);
             try {
                 String choiceStr = scanner.nextLine();
-                if(Helpers.isNullOrEmpty(choiceStr))
+                if (Helpers.isNullOrEmpty(choiceStr))
                     return Optional.empty();
                 int choice = Integer.parseInt(choiceStr);
                 if (choice < 0 || choice >= options.size()) {
@@ -126,7 +135,7 @@ public class Helpers {
 
     public static <TAction extends Runnable> void requestSelectAction(Scanner scanner, String label, List<ActionOption<TAction>> options, int maxCol) {
         var actionOpt = requestSelect(scanner, label, options, maxCol);
-        if(actionOpt.isEmpty())
+        if (actionOpt.isEmpty())
             return;
         actionOpt.get().getAction().run();
     }
@@ -137,7 +146,7 @@ public class Helpers {
 
     public static <TValue> TValue requestSelectValue(Scanner scanner, String label, List<ValueOption<TValue>> options, int maxCol) {
         var valueOpt = requestSelect(scanner, label, options, maxCol);
-        if(valueOpt.isEmpty())
+        if (valueOpt.isEmpty())
             return null;
         return valueOpt.get().getValue();
     }
@@ -151,7 +160,7 @@ public class Helpers {
             TField input = requestSelectValue(scanner, label, options, maxCol);
             try {
                 ValidationResult validationResult = validate(fieldName, input, obj.getClass());
-                if(!validationResult.isValid()) {
+                if (!validationResult.isValid()) {
                     Logger.printWarning("Invalid! %s", validationResult.getErrorMessage());
                     continue;
                 }
@@ -280,6 +289,10 @@ public class Helpers {
         return requestInput(scanner, label, (value) -> Helpers.isNullOrEmpty(value) ? null : UUID.fromString(value), validator);
     }
 
+    public static Instant requestInstantInput(Scanner scanner, String label, Function<Instant, ValidationResult> validator) {
+        return requestInput(scanner, label, (value) -> Helpers.isNullOrEmpty(value) ? null : LocalDate.parse(value, DateTimeFormatter.ofPattern(PATTERN_FORMAT)).atStartOfDay().toInstant(ZoneOffset.UTC), validator);
+    }
+
     private static <TClass, TField> void setInputToObject(String fieldName, TField input, TClass obj) {
         Method setter = Arrays.stream(obj.getClass().getMethods())
                 .filter(m -> m.getName().equalsIgnoreCase("set" + fieldName) && m.canAccess(obj))
@@ -331,7 +344,7 @@ public class Helpers {
         NotBlank notBlankAnno = field.getAnnotation(NotBlank.class);
         if ((notBlankAnno != null && value == null)
                 || (notBlankAnno != null && value instanceof String
-                    && (lengthAnno == null || lengthAnno.min() == 0) && ((String) value).length() == 0)) {
+                && (lengthAnno == null || lengthAnno.min() == 0) && ((String) value).length() == 0)) {
             result.addError(notBlankAnno.message());
         }
 
