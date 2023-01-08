@@ -25,8 +25,11 @@ import kratos.oms.model.product.CreateProductModel;
 import kratos.oms.model.product.ProductSort;
 import kratos.oms.model.product.UpdateProductModel;
 import kratos.oms.model.product.SearchProductModel;
+import kratos.oms.model.statistic.OrderRevenue;
+import kratos.oms.model.statistic.TopSaleProduct;
 import kratos.oms.seedwork.*;
 
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -40,16 +43,19 @@ public class MenuService {
     private final OrderService orderService;
     private final CategoryService categoryService;
     private final CustomerService customerService;
+    private final StatisticService statisticService;
 
     public MenuService(AuthService authService, CartService cartService,
                        ProductService productService, OrderService orderService,
-                       CategoryService categoryService, CustomerService customerService) {
+                       CategoryService categoryService, CustomerService customerService,
+                       StatisticService statisticService) {
         this.authService = authService;
         this.cartService = cartService;
         this.productService = productService;
         this.orderService = orderService;
         this.categoryService = categoryService;
         this.customerService = customerService;
+        this.statisticService = statisticService;
     }
 
     /**
@@ -118,7 +124,7 @@ public class MenuService {
 
             List<ActionOption<Runnable>> actionOptions = new ArrayList<>();
             // only customer need to edit profile
-            if(authService.getPrincipal().getRole() == Role.CUSTOMER)
+            if (authService.getPrincipal().getRole() == Role.CUSTOMER)
                 actionOptions.add(new ActionOption<>("edit", this::editProfileScreen));
             actionOptions.add(new ActionOption<>("go back", () -> goBack.set(true)));
             Helpers.requestSelectAction(scanner, "Your choice [0-" + (actionOptions.size() - 1) + "]: ", actionOptions);
@@ -579,7 +585,7 @@ public class MenuService {
             for (int orderNo = 0; orderNo < orders.size(); orderNo++) {
                 Order order = orders.get(orderNo);
                 Optional<Account> customerOpt = customers.stream().filter(c -> c.getId().equals(order.getAccountId())).findFirst();
-                if(customerOpt.isEmpty())
+                if (customerOpt.isEmpty())
                     throw new IllegalStateException("Customer with id " + order.getAccountId() + " is not found");
                 Account customer = customerOpt.get();
                 System.out.printf("%-7s %-15s %-15s %-20s %-20s %-20s\n", orderNo, order.getCode(), order.getStatus(),
@@ -642,7 +648,7 @@ public class MenuService {
         do {
             banner("order detail");
             Optional<Order> orderOpt = orderService.getDetail(orderId);
-            if(orderOpt.isEmpty())
+            if (orderOpt.isEmpty())
                 throw new IllegalStateException("Order with id " + orderId + " is not found");
             Order order = orderOpt.get();
             order.printDetail();
@@ -665,8 +671,108 @@ public class MenuService {
     }
 
     public void statisticScreen() {
-        banner("statistic");
-        // TODO: implement
+        AtomicBoolean goBack = new AtomicBoolean(false);
+        do {
+            banner("statistic");
+            List<ActionOption<Runnable>> actionOptions = new ArrayList<>() {{
+                add(new ActionOption<>("top sale product", () -> {
+                    Instant date = Helpers.requestInstantInput(scanner, "Analyze on date (dd/MM/yyyy): ", null);
+                    topSaleScreen(date);
+                }));
+                add(new ActionOption<>("revenue", () -> {
+                    Instant date = Helpers.requestInstantInput(scanner, "Analyze on date (dd/MM/yyyy): ", null);
+                    revenueScreen(date);
+                }));
+            }};
+            addCommonActions(actionOptions, goBack);
+            Helpers.requestSelectAction(scanner, "Your choice [0-" + (actionOptions.size() - 1) + "]: ", actionOptions);
+        } while (!goBack.get());
+    }
+
+    public void topSaleScreen(Instant date) {
+        AtomicBoolean goBack = new AtomicBoolean(false);
+        AtomicReference<Instant> dateFilter = new AtomicReference<>(date);
+        do {
+            banner("top sale products");
+            List<TopSaleProduct> topSaleProducts = statisticService.getTopSaleProducts(dateFilter.get());
+
+            System.out.printf("Date: %s\n\n", Helpers.toString(date));
+
+            System.out.printf("%-7s %-30s %-15s %-15s %-20s\n", "No.", "Name", "Category", "Quantity", "Amount");
+            System.out.println("-".repeat(100));
+            if(topSaleProducts.isEmpty())
+                Logger.printInfo("No product had been bought...");
+            int productNo = 0;
+            for (TopSaleProduct product : topSaleProducts) {
+                System.out.printf("%-7s %-30s %-15s %-15s %-20s\n",
+                        productNo, product.getName(),
+                        product.getCategory(), product.getQuantity(),
+                        Helpers.toString(product.getTotalSale()));
+                productNo++;
+            }
+            List<ActionOption<Runnable>> actionOptions = new ArrayList<>() {{
+                add(new ActionOption<>("another date", () -> {
+                    Instant date = Helpers.requestInstantInput(scanner, "Analyze on date (dd/MM/yyyy): ", null);
+                    dateFilter.set(date);
+                }));
+                add(new ActionOption<>("view detail", () -> {
+                    int productNo = Helpers.requestIntInput(scanner, "Enter product No. to view detail: ", (value) -> {
+                        if (value < 0 || value >= topSaleProducts.size()) {
+                            return ValidationResult.inValidInstance("Given product No. is out of index.");
+                        }
+                        return ValidationResult.validInstance();
+                    });
+                    productDetailScreen(topSaleProducts.get(productNo).getId());
+                }));
+                add(new ActionOption<>("go back", () -> goBack.set(true)));
+            }};
+            Helpers.requestSelectAction(scanner, "Your choice [0-" + (actionOptions.size() - 1) + "]: ", actionOptions);
+        } while (!goBack.get());
+    }
+
+    public void revenueScreen(Instant date) {
+        AtomicBoolean goBack = new AtomicBoolean(false);
+        AtomicReference<Instant> dateFilter = new AtomicReference<>(date);
+        do {
+            banner("revenue");
+            OrderRevenue orderRevenue = statisticService.getRevenue(dateFilter.get());
+            List<Account> customers = customerService.search(new SearchCustomerModel());
+
+            System.out.printf("Date: %s\n", Helpers.toString(date));
+            System.out.printf("Revenue: %s\n\n", Helpers.toString(orderRevenue.getRevenue()));
+
+            System.out.printf("%-7s %-15s %-15s %-20s %-20s %-20s\n", "No.", "Code", "Status", "Total Amount", "Customer", "Date");
+            System.out.println("-".repeat(100));
+            if (orderRevenue.getOrders().isEmpty())
+                Logger.printInfo("No order had been executed...");
+            for (int orderNo = 0; orderNo < orderRevenue.getOrders().size(); orderNo++) {
+                Order order = orderRevenue.getOrders().get(orderNo);
+                Optional<Account> customerOpt = customers.stream().filter(c -> c.getId().equals(order.getAccountId())).findFirst();
+                if (customerOpt.isEmpty())
+                    throw new IllegalStateException("Customer with id " + order.getAccountId() + " is not found");
+                Account customer = customerOpt.get();
+                System.out.printf("%-7s %-15s %-15s %-20s %-20s %-20s\n", orderNo, order.getCode(), order.getStatus(),
+                        Helpers.toString(order.getTotalAmount()), customer.getFullName(), Helpers.toString(order.getOrderDate()));
+            }
+
+            List<ActionOption<Runnable>> actionOptions = new ArrayList<>() {{
+                add(new ActionOption<>("another date", () -> {
+                    Instant date = Helpers.requestInstantInput(scanner, "Analyze on date (dd/MM/yyyy): ", null);
+                    dateFilter.set(date);
+                }));
+                add(new ActionOption<>("view detail", () -> {
+                    int orderNo = Helpers.requestIntInput(scanner, "Enter order No. to view detail: ", (value) -> {
+                        if (value < 0 || value >= orderRevenue.getOrders().size()) {
+                            return ValidationResult.inValidInstance("Given order No. is out of index.");
+                        }
+                        return ValidationResult.validInstance();
+                    });
+                    orderDetailScreen(orderRevenue.getOrders().get(orderNo).getId());
+                }));
+                add(new ActionOption<>("go back", () -> goBack.set(true)));
+            }};
+            Helpers.requestSelectAction(scanner, "Your choice [0-" + (actionOptions.size() - 1) + "]: ", actionOptions);
+        } while (!goBack.get());
     }
 
     public void loginScreen() {
