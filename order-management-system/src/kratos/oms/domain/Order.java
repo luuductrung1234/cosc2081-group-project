@@ -46,7 +46,7 @@ public class Order extends Domain<UUID> {
     }
 
     public Order(UUID id, UUID accountId, List<OrderItem> items, double discount, Instant orderDate) {
-        this(id, RandomString.getEasyCode(), accountId, OrderStatus.CREATED, items, discount, orderDate, null, null, null, null);
+        this(id, RandomString.getEasyCode(), accountId, OrderStatus.DELIVERING, items, discount, orderDate, null, null, null, null);
     }
 
     public Order(UUID accountId, List<OrderItem> items, double discount, Instant orderDate) {
@@ -69,14 +69,8 @@ public class Order extends Domain<UUID> {
         this.items.addAll(items);
     }
 
-    public void paid(String paidBy) {
-        this.status = OrderStatus.DELIVERED;
-        this.paidBy = paidBy;
-        this.paidOn = Instant.now();
-    }
-
     public void complete(String completedBy) {
-        this.status = OrderStatus.PAID;
+        this.status = OrderStatus.DELIVERED;
         this.completedBy = completedBy;
         this.completedOn = Instant.now();
     }

@@ -32,7 +32,7 @@ public class Main {
         CartService cartService = new CartService(authService, cartRepository);
         ProductService productService = new ProductService(productRepository, categoryRepository, cartRepository);
         OrderService orderService = new OrderService(orderRepository);
-        CategoryService categoryService = new CategoryService(categoryRepository);
+        CategoryService categoryService = new CategoryService(categoryRepository, productRepository);
         CustomerService customerService = new CustomerService(accountRepository, orderRepository);
         StatisticService statisticService = new StatisticService(orderRepository, productRepository);
 

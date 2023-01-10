@@ -578,7 +578,7 @@ public class MenuService {
             System.out.printf("sort by: %s\n\n",
                     searchModel.get().getSortedBy() == null ? "n/a" : searchModel.get().getSortedBy());
 
-            System.out.printf("%-7s %-15s %-15s %-20s %-20s %-20s\n", "No.", "Code", "Status", "Total Amount", "Customer", "Date");
+            System.out.printf("%-7s %-15s %-15s %-20s %-25s %-20s\n", "No.", "Code", "Status", "Total Amount", "Customer", "Date");
             System.out.println("-".repeat(100));
             if (orders.isEmpty())
                 Logger.printInfo("No order found...");
@@ -588,7 +588,7 @@ public class MenuService {
                 if (customerOpt.isEmpty())
                     throw new IllegalStateException("Customer with id " + order.getAccountId() + " is not found");
                 Account customer = customerOpt.get();
-                System.out.printf("%-7s %-15s %-15s %-20s %-20s %-20s\n", orderNo, order.getCode(), order.getStatus(),
+                System.out.printf("%-7s %-15s %-15s %-20s %-25s %-20s\n", orderNo, order.getCode(), order.getStatus(),
                         Helpers.toString(order.getTotalAmount()), customer.getFullName(), Helpers.toString(order.getOrderDate()));
             }
 
@@ -607,9 +607,8 @@ public class MenuService {
                         }
 
                         Helpers.requestSelectValue(scanner, "Filter by status: ", new ArrayList<>() {{
-                            add(new ValueOption<>("Created", OrderStatus.CREATED));
+                            add(new ValueOption<>("Delivering", OrderStatus.DELIVERING));
                             add(new ValueOption<>("Delivered", OrderStatus.DELIVERED));
-                            add(new ValueOption<>("Paid", OrderStatus.PAID));
                         }}, "status", newSearchModel, 3);
 
                         Helpers.requestSelectValue(scanner, "Sort by: ", new ArrayList<ValueOption<OrderSort>>() {{
@@ -654,12 +653,7 @@ public class MenuService {
             order.printDetail();
 
             List<ActionOption<Runnable>> actionOptions = new ArrayList<>();
-            if (authService.getPrincipal().getRole() == Role.CUSTOMER && order.getStatus() == OrderStatus.CREATED) {
-                actionOptions.add(new ActionOption<>("paid", () -> {
-                    orderService.paid(orderId, authService.getPrincipal().getUsername());
-                }));
-            }
-            if (authService.getPrincipal().getRole() == Role.ADMIN && order.getStatus() == OrderStatus.DELIVERED) {
+            if (authService.getPrincipal().getRole() == Role.ADMIN && order.getStatus() == OrderStatus.DELIVERING) {
                 actionOptions.add(new ActionOption<>("complete", () -> {
                     orderService.complete(orderId, authService.getPrincipal().getUsername());
                     customerService.updateMembership(order.getAccountId());

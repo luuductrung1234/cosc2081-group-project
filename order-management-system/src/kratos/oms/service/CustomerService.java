@@ -56,7 +56,7 @@ public class CustomerService {
 
     public void updateMembership(UUID customerId) {
         double totalSpending = orderRepository.listAll().stream()
-                .filter(o -> o.getAccountId().equals(customerId) && o.getStatus() == OrderStatus.PAID)
+                .filter(o -> o.getAccountId().equals(customerId) && o.getStatus() == OrderStatus.DELIVERED)
                 .mapToDouble(Order::getTotalAmount).sum();
         Membership newMembership = Membership.NONE;
         if (totalSpending >= PLATINUM_SPENDING) {
