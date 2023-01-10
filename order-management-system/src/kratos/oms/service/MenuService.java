@@ -578,7 +578,7 @@ public class MenuService {
             System.out.printf("sort by: %s\n\n",
                     searchModel.get().getSortedBy() == null ? "n/a" : searchModel.get().getSortedBy());
 
-            System.out.printf("%-7s %-15s %-15s %-20s %-20s %-20s\n", "No.", "Code", "Status", "Total Amount", "Customer", "Date");
+            System.out.printf("%-7s %-15s %-15s %-20s %-25s %-20s\n", "No.", "Code", "Status", "Total Amount", "Customer", "Date");
             System.out.println("-".repeat(100));
             if (orders.isEmpty())
                 Logger.printInfo("No order found...");
@@ -588,7 +588,7 @@ public class MenuService {
                 if (customerOpt.isEmpty())
                     throw new IllegalStateException("Customer with id " + order.getAccountId() + " is not found");
                 Account customer = customerOpt.get();
-                System.out.printf("%-7s %-15s %-15s %-20s %-20s %-20s\n", orderNo, order.getCode(), order.getStatus(),
+                System.out.printf("%-7s %-15s %-15s %-20s %-25s %-20s\n", orderNo, order.getCode(), order.getStatus(),
                         Helpers.toString(order.getTotalAmount()), customer.getFullName(), Helpers.toString(order.getOrderDate()));
             }
 

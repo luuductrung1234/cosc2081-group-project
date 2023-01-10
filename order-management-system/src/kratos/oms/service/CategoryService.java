@@ -1,22 +1,25 @@
 package kratos.oms.service;
 
 import kratos.oms.domain.Category;
+import kratos.oms.domain.Product;
 import kratos.oms.model.category.CreateCategoryModel;
 import kratos.oms.model.category.SearchCategoryModel;
 import kratos.oms.repository.CategoryRepository;
+import kratos.oms.repository.ProductRepository;
 import kratos.oms.seedwork.Helpers;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class CategoryService {
     private final CategoryRepository categoryRepository;
+    private final ProductRepository productRepository;
 
-    public CategoryService(CategoryRepository categoryRepository) {
+    public CategoryService(CategoryRepository categoryRepository, ProductRepository productRepository) {
         this.categoryRepository = categoryRepository;
+        this.productRepository = productRepository;
     }
 
     public List<Category> search(SearchCategoryModel searchModel) {
@@ -27,10 +30,6 @@ public class CategoryService {
         return categoryStream.collect(Collectors.toList());
     }
 
-    public Optional<Category> getDetail(UUID id) {
-        return categoryRepository.listAll().stream().findFirst();
-    }
-
     public Category add(CreateCategoryModel model) {
         Category newCategory = new Category(model.getName());
         categoryRepository.add(newCategory);
@@ -38,6 +37,12 @@ public class CategoryService {
     }
 
     public boolean delete(UUID id) {
+        List<Product> products = productRepository.listAll().stream()
+                .filter(p -> p.getCategory().getId().equals(id)).collect(Collectors.toList());
+        for (Product product : products) {
+            product.setCategory(new Category(Helpers.emptyUuid(), "None"));
+            productRepository.update(product);
+        }
         return categoryRepository.delete(id);
     }
 }
