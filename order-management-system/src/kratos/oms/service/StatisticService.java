@@ -17,7 +17,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class StatisticService {
     private final OrderRepository orderRepository;
@@ -77,7 +76,7 @@ public class StatisticService {
         return orderRepository.listAll().stream()
                 .filter(o -> {
                     LocalDate localOrderDate = LocalDate.ofInstant(o.getOrderDate(), ZoneId.systemDefault());
-                    return localOrderDate.equals(localDate) && o.getStatus().equals(OrderStatus.PAID);
+                    return localOrderDate.equals(localDate) && o.getStatus().equals(OrderStatus.DELIVERED);
                 })
                 .collect(Collectors.toList());
     }

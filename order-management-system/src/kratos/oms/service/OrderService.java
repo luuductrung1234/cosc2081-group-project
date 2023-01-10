@@ -55,15 +55,6 @@ public class OrderService {
         return orderRepository.add(order);
     }
 
-    public boolean paid(UUID orderId, String paidBy) {
-        Optional<Order> orderOpt = getDetail(orderId);
-        if(orderOpt.isEmpty())
-            throw new IllegalArgumentException("Order with id " + orderId + " is not found");
-        Order order = orderOpt.get();
-        order.paid(paidBy);
-        return orderRepository.update(order);
-    }
-
     public boolean complete(UUID orderId, String completedBy) {
         Optional<Order> orderOpt = getDetail(orderId);
         if(orderOpt.isEmpty())

@@ -1,8 +1,8 @@
 6d34bf9b-b1d3-4a64-be6c-51df4a8f3800,trung,gzJBYNQ72zJ+VVtr6M5lToxpPpXApPEIF0mbueAiSh0=,trung,CUSTOMER,,,,NONE
 f8ed39b6-a42c-4c37-9aba-2441886903ee,admin,jGl25bVBBBW96Qi9Te4V37Fnqchz/Eu4qB9vKrRIqRg=,admin,ADMIN,,,,
-4901d2ed-5f37-43e6-9f35-a3bce5b51901,customer3,GMXJvomMZcXlxRrD6U/qz/C5kfhGOjoY61JOn35hMag=,Robbert Downey JR,CUSTOMER,+84872234433,,,NONE
 27852737-b4c4-4dee-a1bb-d0b2fc5f22c0,customer4,BZVQ45kdE9jW9PDpgMZxOKNn40sOGJvmgvi2YN5oHso=,Christopher Noland,CUSTOMER,+84857445234,christ@email.com,Southern Road St.# LA# Califonia# US,NONE
 b9ec2f39-2f8d-42a8-b43d-14168e22d5af,customer5,Sj8m5RQv3O7gmxMkED1ishDnjCsjcQ9Q9wi47dr6noE=,Jenifer Lopez,CUSTOMER,1234567890,fdsaf@fdsafs,05 Merry Christmas# SP# Florida# US,NONE
 67fd0517-b7e7-4c59-91a6-9bdf91bd9e73,test02,XohImNooBHFR0OVvjcYpJ3NgPQ1qq73WKhHvch0VQtg=,Another Name,CUSTOMER,0834324234,,fdasf# fsadfsd# fsadfdsf,NONE
 b9669f77-75ae-47c0-b6c3-05b211e0142b,customer2,yMfLW56Pehs9HQJgKtpiMnEyOR2+Do7geRPNVQ7qHzs=,Alice Stephent,CUSTOMER,+0018472453,,,GOLD
 7bd458ea-8e61-4672-ad0e-209c12f674ea,customer,tsRYY4deNEh8o8FV7RRe/hKnRYHie+/sWqZhuO6Mpt0=,John Doe,CUSTOMER,07734238584,customer@email.com,,SILVER
+4901d2ed-5f37-43e6-9f35-a3bce5b51901,customer3,GMXJvomMZcXlxRrD6U/qz/C5kfhGOjoY61JOn35hMag=,Robbert Downey JR,CUSTOMER,+84872234433,,,SILVER

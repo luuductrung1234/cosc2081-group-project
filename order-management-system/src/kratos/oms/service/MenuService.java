@@ -607,9 +607,8 @@ public class MenuService {
                         }
 
                         Helpers.requestSelectValue(scanner, "Filter by status: ", new ArrayList<>() {{
-                            add(new ValueOption<>("Created", OrderStatus.CREATED));
+                            add(new ValueOption<>("Delivering", OrderStatus.DELIVERING));
                             add(new ValueOption<>("Delivered", OrderStatus.DELIVERED));
-                            add(new ValueOption<>("Paid", OrderStatus.PAID));
                         }}, "status", newSearchModel, 3);
 
                         Helpers.requestSelectValue(scanner, "Sort by: ", new ArrayList<ValueOption<OrderSort>>() {{
@@ -654,12 +653,7 @@ public class MenuService {
             order.printDetail();
 
             List<ActionOption<Runnable>> actionOptions = new ArrayList<>();
-            if (authService.getPrincipal().getRole() == Role.CUSTOMER && order.getStatus() == OrderStatus.CREATED) {
-                actionOptions.add(new ActionOption<>("paid", () -> {
-                    orderService.paid(orderId, authService.getPrincipal().getUsername());
-                }));
-            }
-            if (authService.getPrincipal().getRole() == Role.ADMIN && order.getStatus() == OrderStatus.DELIVERED) {
+            if (authService.getPrincipal().getRole() == Role.ADMIN && order.getStatus() == OrderStatus.DELIVERING) {
                 actionOptions.add(new ActionOption<>("complete", () -> {
                     orderService.complete(orderId, authService.getPrincipal().getUsername());
                     customerService.updateMembership(order.getAccountId());
