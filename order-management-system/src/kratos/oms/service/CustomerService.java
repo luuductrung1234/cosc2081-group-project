@@ -40,10 +40,12 @@ public class CustomerService {
                 case NameDescending:
                     stream = stream.sorted(Comparator.comparing(Account::getFullName).reversed());
                     break;
-                default:
+                case NameAscending:
                     stream = stream.sorted(Comparator.comparing(Account::getFullName));
                     break;
             }
+        } else {
+            stream = stream.sorted(Comparator.comparing(Account::getFullName));
         }
         return stream.collect(Collectors.toList());
     }

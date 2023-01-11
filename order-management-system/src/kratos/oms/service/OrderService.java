@@ -38,10 +38,12 @@ public class OrderService {
                 case DateAscending:
                     stream = stream.sorted(Comparator.comparing(Order::getOrderDate));
                     break;
-                default:
+                case DateDescending:
                     stream = stream.sorted(Comparator.comparing(Order::getOrderDate).reversed());
                     break;
             }
+        } else {
+            stream = stream.sorted(Comparator.comparing(Order::getOrderDate).reversed());
         }
         return stream.collect(Collectors.toList());
     }

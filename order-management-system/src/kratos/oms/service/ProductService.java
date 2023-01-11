@@ -47,10 +47,12 @@ public class ProductService {
                 case NameDescending:
                     stream = stream.sorted(Comparator.comparing(Product::getName).reversed());
                     break;
-                default:
+                case NameAscending:
                     stream = stream.sorted(Comparator.comparing(Product::getName));
                     break;
             }
+        } else {
+            stream = stream.sorted(Comparator.comparing(Product::getName));
         }
         return stream.collect(Collectors.toList());
     }
