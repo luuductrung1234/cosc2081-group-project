@@ -26,6 +26,7 @@ import kratos.oms.model.product.ProductSort;
 import kratos.oms.model.product.UpdateProductModel;
 import kratos.oms.model.product.SearchProductModel;
 import kratos.oms.model.statistic.OrderRevenue;
+import kratos.oms.model.statistic.TopPaidCustomer;
 import kratos.oms.model.statistic.TopSaleProduct;
 import kratos.oms.seedwork.*;
 
@@ -673,13 +674,16 @@ public class MenuService {
         do {
             banner("statistic");
             List<ActionOption<Runnable>> actionOptions = new ArrayList<>() {{
+                add(new ActionOption<>("revenue", () -> {
+                    Instant date = Helpers.requestInstantInput(scanner, "Analyze on date (dd/MM/yyyy): ", null);
+                    revenueScreen(date);
+                }));
                 add(new ActionOption<>("top sale product", () -> {
                     Instant date = Helpers.requestInstantInput(scanner, "Analyze on date (dd/MM/yyyy): ", null);
                     topSaleScreen(date);
                 }));
-                add(new ActionOption<>("revenue", () -> {
-                    Instant date = Helpers.requestInstantInput(scanner, "Analyze on date (dd/MM/yyyy): ", null);
-                    revenueScreen(date);
+                add(new ActionOption<>("top paid customer", () -> {
+                    topPaidScreen();
                 }));
             }};
             addCommonActions(actionOptions, goBack);
@@ -722,6 +726,30 @@ public class MenuService {
                     });
                     productDetailScreen(topSaleProducts.get(productNo).getId());
                 }));
+                add(new ActionOption<>("go back", () -> goBack.set(true)));
+            }};
+            Helpers.requestSelectAction(scanner, "Your choice [0-" + (actionOptions.size() - 1) + "]: ", actionOptions);
+        } while (!goBack.get());
+    }
+
+    public void topPaidScreen() {
+        AtomicBoolean goBack = new AtomicBoolean(false);
+        do {
+            banner("top paid customers");
+            List<TopPaidCustomer> topPaidCustomers = statisticService.getTopPaidCustomers();
+
+            System.out.printf("%-7s %-30s %-15s\n", "No.", "Name", "Total Spend");
+            System.out.println("-".repeat(60));
+            if(topPaidCustomers.isEmpty())
+                Logger.printInfo("Customers didn't buy anything...");
+            int customerNo = 0;
+            for (TopPaidCustomer customer : topPaidCustomers) {
+                System.out.printf("%-7s %-30s %-15s\n",
+                        customerNo, customer.getName(),
+                        Helpers.toString(customer.getTotalSpending()));
+                customerNo++;
+            }
+            List<ActionOption<Runnable>> actionOptions = new ArrayList<>() {{
                 add(new ActionOption<>("go back", () -> goBack.set(true)));
             }};
             Helpers.requestSelectAction(scanner, "Your choice [0-" + (actionOptions.size() - 1) + "]: ", actionOptions);
