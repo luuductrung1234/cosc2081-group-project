@@ -2,12 +2,14 @@ package kratos.oms.model.order;
 
 import kratos.oms.domain.OrderStatus;
 
+import java.time.Instant;
 import java.util.UUID;
 
 public class SearchOrderModel {
     private String code;
     private UUID customerId;
     private OrderStatus status;
+    private Instant orderDate;
     private OrderSort sortedBy;
 
     public String getCode() {
@@ -24,6 +26,14 @@ public class SearchOrderModel {
 
     public void setCustomerId(UUID customerId) {
         this.customerId = customerId;
+    }
+
+    public Instant getOrderDate() {
+        return orderDate;
+    }
+
+    public void setOrderDate(Instant orderDate) {
+        this.orderDate = orderDate;
     }
 
     public OrderStatus getStatus() {

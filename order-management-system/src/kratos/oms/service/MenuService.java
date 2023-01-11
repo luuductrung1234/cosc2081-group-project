@@ -567,6 +567,8 @@ public class MenuService {
             System.out.println("search by:");
             System.out.printf("\tcode: %s\n",
                     searchModel.get().getCode() == null ? "n/a" : searchModel.get().getCode());
+            System.out.printf("\tdate: %s\n",
+                    searchModel.get().getCode() == null ? "n/a" : Helpers.toString(searchModel.get().getOrderDate()));
             // only allow Admin search order by customer
             if (authService.getPrincipal().getRole() == Role.ADMIN) {
                 Optional<Account> customerOpt = customerService.getDetail(searchModel.get().getCustomerId());
@@ -598,6 +600,8 @@ public class MenuService {
                         SearchOrderModel newSearchModel = new SearchOrderModel();
 
                         Helpers.requestStringInput(scanner, "Filter by code: ", "code", newSearchModel);
+
+                        Helpers.requestInstantInput(scanner, "Filter by date: ", "orderDate", newSearchModel);
 
                         // only allow Admin search order by customer
                         if (authService.getPrincipal().getRole() == Role.ADMIN) {

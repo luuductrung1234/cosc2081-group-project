@@ -289,6 +289,10 @@ public class Helpers {
         return requestInput(scanner, label, (value) -> Helpers.isNullOrEmpty(value) ? null : UUID.fromString(value), validator);
     }
 
+    public static <TClass> void requestInstantInput(Scanner scanner, String label, String fieldName, TClass obj) throws RuntimeException {
+        requestInput(scanner, label, fieldName, (value) -> Helpers.isNullOrEmpty(value) ? null : LocalDate.parse(value, DateTimeFormatter.ofPattern(PATTERN_FORMAT)).atStartOfDay().toInstant(ZoneOffset.UTC), obj);
+    }
+
     public static Instant requestInstantInput(Scanner scanner, String label, Function<Instant, ValidationResult> validator) {
         return requestInput(scanner, label, (value) -> Helpers.isNullOrEmpty(value) ? null : LocalDate.parse(value, DateTimeFormatter.ofPattern(PATTERN_FORMAT)).atStartOfDay().toInstant(ZoneOffset.UTC), validator);
     }

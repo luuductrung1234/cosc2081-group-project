@@ -5,6 +5,8 @@ import kratos.oms.domain.Order;
 import kratos.oms.model.order.SearchOrderModel;
 import kratos.oms.repository.OrderRepository;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -23,6 +25,13 @@ public class OrderService {
         Stream<Order> stream = orderRepository.listAll().stream();
         if(model.getCode() != null)
             stream = stream.filter(o -> o.getCode().contains(model.getCode()));
+        if(model.getOrderDate() != null) {
+            LocalDate localDate = LocalDate.ofInstant(model.getOrderDate(), ZoneId.systemDefault());
+            stream = stream.filter(o -> {
+                LocalDate localOrderDate = LocalDate.ofInstant(o.getOrderDate(), ZoneId.systemDefault());
+                return localOrderDate.equals(localDate);
+            });
+        }
         if(model.getCustomerId() != null)
             stream = stream.filter(o -> o.getAccountId().equals(model.getCustomerId()));
         if(model.getStatus() != null)
