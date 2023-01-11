@@ -37,11 +37,11 @@ public class CustomerService {
         }
         if(model.getSortedBy() != null) {
             switch (model.getSortedBy()) {
-                case NameAscending:
-                    stream = stream.sorted(Comparator.comparing(Account::getFullName));
-                    break;
                 case NameDescending:
                     stream = stream.sorted(Comparator.comparing(Account::getFullName).reversed());
+                    break;
+                default:
+                    stream = stream.sorted(Comparator.comparing(Account::getFullName));
                     break;
             }
         }

@@ -38,17 +38,17 @@ public class ProductService {
             stream = stream.filter(p -> p.getCategory().getId().equals(model.getCategoryId()));
         if(model.getSortedBy() != null) {
             switch (model.getSortedBy()) {
-                case NameAscending:
-                    stream = stream.sorted(Comparator.comparing(Product::getName));
-                    break;
-                case NameDescending:
-                    stream = stream.sorted(Comparator.comparing(Product::getName).reversed());
-                    break;
                 case PriceAscending:
                     stream = stream.sorted(Comparator.comparingDouble(Product::getPrice));
                     break;
                 case PriceDescending:
                     stream = stream.sorted(Comparator.comparingDouble(Product::getPrice).reversed());
+                    break;
+                case NameDescending:
+                    stream = stream.sorted(Comparator.comparing(Product::getName).reversed());
+                    break;
+                default:
+                    stream = stream.sorted(Comparator.comparing(Product::getName));
                     break;
             }
         }

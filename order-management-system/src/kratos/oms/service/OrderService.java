@@ -29,17 +29,17 @@ public class OrderService {
             stream = stream.filter(o -> o.getStatus().equals(model.getStatus()));
         if(model.getSortedBy() != null) {
             switch (model.getSortedBy()) {
-                case DateAscending:
-                    stream = stream.sorted(Comparator.comparing(Order::getOrderDate));
-                    break;
-                case DateDescending:
-                    stream = stream.sorted(Comparator.comparing(Order::getOrderDate).reversed());
-                    break;
                 case AmountAscending:
                     stream = stream.sorted(Comparator.comparingDouble(Order::getTotalAmount));
                     break;
                 case AmountDescending:
                     stream = stream.sorted(Comparator.comparingDouble(Order::getTotalAmount).reversed());
+                    break;
+                case DateAscending:
+                    stream = stream.sorted(Comparator.comparing(Order::getOrderDate));
+                    break;
+                default:
+                    stream = stream.sorted(Comparator.comparing(Order::getOrderDate).reversed());
                     break;
             }
         }
