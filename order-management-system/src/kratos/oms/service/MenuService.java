@@ -663,7 +663,7 @@ public class MenuService {
                     customerService.updateMembership(order.getAccountId());
                 }));
             }
-            addCommonActions(actionOptions, goBack);
+            actionOptions.add(new ActionOption<>("go back", () -> goBack.set(true)));
             Helpers.requestSelectAction(scanner, "Your choice [0-" + (actionOptions.size() - 1) + "]: ", actionOptions);
         } while (!goBack.get());
     }

@@ -7,6 +7,7 @@ import kratos.oms.repository.AccountRepository;
 import kratos.oms.repository.OrderRepository;
 import kratos.oms.seedwork.Helpers;
 
+import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -29,13 +30,13 @@ public class CustomerService {
 
     public List<Account> search(SearchCustomerModel model) {
         Stream<Account> stream = accountRepository.listAll().stream().filter(a -> a.getRole().equals(Role.CUSTOMER));
-        if(!Helpers.isNullOrEmpty(model.getSearchText())) {
+        if (!Helpers.isNullOrEmpty(model.getSearchText())) {
             String searchText = model.getSearchText().toUpperCase();
             stream = stream.filter(c -> c.getFullName().toUpperCase().contains(searchText)
                     || (c.getProfile().getPhone() != null && c.getProfile().getPhone().toUpperCase().contains(searchText))
                     || (c.getProfile().getEmail() != null && c.getProfile().getEmail().toUpperCase().contains(searchText)));
         }
-        if(model.getSortedBy() != null) {
+        if (model.getSortedBy() != null) {
             switch (model.getSortedBy()) {
                 case NameDescending:
                     stream = stream.sorted(Comparator.comparing(Account::getFullName).reversed());
@@ -57,19 +58,19 @@ public class CustomerService {
     }
 
     public void updateMembership(UUID customerId) {
-        double totalSpending = orderRepository.listAll().stream()
+        BigDecimal totalSpending = orderRepository.listAll().stream()
                 .filter(o -> o.getAccountId().equals(customerId) && o.getStatus() == OrderStatus.DELIVERED)
-                .mapToDouble(Order::getTotalAmount).sum();
+                .map(Order::getTotalAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
         Membership newMembership = Membership.NONE;
-        if (totalSpending >= PLATINUM_SPENDING) {
+        if (totalSpending.compareTo(BigDecimal.valueOf(PLATINUM_SPENDING)) >= 0) {
             newMembership = Membership.PLATINUM;
-        } else if (totalSpending >= GOLD_SPENDING) {
+        } else if (totalSpending.compareTo(BigDecimal.valueOf(GOLD_SPENDING)) >= 0) {
             newMembership = Membership.GOLD;
-        } else if (totalSpending >= SILVER_SPENDING) {
+        } else if (totalSpending.compareTo(BigDecimal.valueOf(SILVER_SPENDING)) >= 0) {
             newMembership = Membership.SILVER;
         }
         Optional<Account> customerOpt = getDetail(customerId);
-        if(customerOpt.isEmpty())
+        if (customerOpt.isEmpty())
             throw new IllegalStateException("Customer with id " + customerId + " is not found");
         Account customer = customerOpt.get();
         customer.setMembership(newMembership);
@@ -78,7 +79,7 @@ public class CustomerService {
 
     public void updateProfile(UpdateProfileModel model) {
         Optional<Account> customerOpt = getDetail(model.getCustomerId());
-        if(customerOpt.isEmpty())
+        if (customerOpt.isEmpty())
             throw new IllegalStateException("Customer with id " + model.getCustomerId() + " is not found");
         Account customer = customerOpt.get();
         customer.update(model.getFullName(), model.getPhone(), model.getEmail(), model.getAddress());

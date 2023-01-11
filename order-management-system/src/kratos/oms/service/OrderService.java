@@ -39,10 +39,10 @@ public class OrderService {
         if(model.getSortedBy() != null) {
             switch (model.getSortedBy()) {
                 case AmountAscending:
-                    stream = stream.sorted(Comparator.comparingDouble(Order::getTotalAmount));
+                    stream = stream.sorted(Comparator.comparing(Order::getTotalAmount));
                     break;
                 case AmountDescending:
-                    stream = stream.sorted(Comparator.comparingDouble(Order::getTotalAmount).reversed());
+                    stream = stream.sorted(Comparator.comparing(Order::getTotalAmount).reversed());
                     break;
                 case DateAscending:
                     stream = stream.sorted(Comparator.comparing(Order::getOrderDate));
