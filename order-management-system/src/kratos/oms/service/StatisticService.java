@@ -1,6 +1,7 @@
 package kratos.oms.service;
 
 import kratos.oms.domain.*;
+import kratos.oms.model.statistic.MembershipNumber;
 import kratos.oms.model.statistic.OrderRevenue;
 import kratos.oms.model.statistic.TopPaidCustomer;
 import kratos.oms.model.statistic.TopSaleProduct;
@@ -89,6 +90,21 @@ public class StatisticService {
         return topPaidCustomers.stream()
                 .sorted(Comparator.comparing(TopPaidCustomer::getTotalSpending).reversed())
                 .collect(Collectors.toList());
+    }
+
+    public List<MembershipNumber> getMembershipCount() {
+        List<Account> customers = accountRepository.listAll().stream()
+                .filter(a -> a.getRole().equals(Role.CUSTOMER)).collect(Collectors.toList());
+        return new ArrayList<>() {{
+            add(new MembershipNumber(Membership.NONE, customers.stream()
+                    .filter(c -> c.getProfile().getMembership().equals(Membership.NONE)).count()));
+            add(new MembershipNumber(Membership.SILVER, customers.stream()
+                    .filter(c -> c.getProfile().getMembership().equals(Membership.SILVER)).count()));
+            add(new MembershipNumber(Membership.GOLD, customers.stream()
+                    .filter(c -> c.getProfile().getMembership().equals(Membership.GOLD)).count()));
+            add(new MembershipNumber(Membership.PLATINUM, customers.stream()
+                    .filter(c -> c.getProfile().getMembership().equals(Membership.PLATINUM)).count()));
+        }};
     }
 
     private List<Order> getPaidOrder(Instant date) {

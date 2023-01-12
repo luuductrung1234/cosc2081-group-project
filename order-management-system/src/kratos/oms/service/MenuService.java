@@ -25,6 +25,7 @@ import kratos.oms.model.product.CreateProductModel;
 import kratos.oms.model.product.ProductSort;
 import kratos.oms.model.product.UpdateProductModel;
 import kratos.oms.model.product.SearchProductModel;
+import kratos.oms.model.statistic.MembershipNumber;
 import kratos.oms.model.statistic.OrderRevenue;
 import kratos.oms.model.statistic.TopPaidCustomer;
 import kratos.oms.model.statistic.TopSaleProduct;
@@ -685,8 +686,32 @@ public class MenuService {
                 add(new ActionOption<>("top paid customer", () -> {
                     topPaidScreen();
                 }));
+                add(new ActionOption<>("membership list", () -> {
+                    membershipListScreen();
+                }));
             }};
             addCommonActions(actionOptions, goBack);
+            Helpers.requestSelectAction(scanner, "Your choice [0-" + (actionOptions.size() - 1) + "]: ", actionOptions);
+        } while (!goBack.get());
+    }
+
+    public void membershipListScreen() {
+        AtomicBoolean goBack = new AtomicBoolean(false);
+        do {
+            banner("membership list");
+            List<MembershipNumber> membershipNumbers = statisticService.getMembershipCount();
+
+            System.out.printf("%-7s %-20s %-15s\n", "No.", "Membership", "Customer Count");
+            System.out.println("-".repeat(45));
+            int membershipNo = 0;
+            for (MembershipNumber membership : membershipNumbers) {
+                System.out.printf("%-7s %-20s %-15s\n",
+                        membershipNo, membership.getMembership(), membership.getCustomerCount());
+                membershipNo++;
+            }
+            List<ActionOption<Runnable>> actionOptions = new ArrayList<>() {{
+                add(new ActionOption<>("go back", () -> goBack.set(true)));
+            }};
             Helpers.requestSelectAction(scanner, "Your choice [0-" + (actionOptions.size() - 1) + "]: ", actionOptions);
         } while (!goBack.get());
     }
