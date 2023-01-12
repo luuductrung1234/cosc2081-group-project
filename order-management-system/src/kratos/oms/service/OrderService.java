@@ -5,6 +5,8 @@ import kratos.oms.domain.Order;
 import kratos.oms.model.order.SearchOrderModel;
 import kratos.oms.repository.OrderRepository;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -23,25 +25,34 @@ public class OrderService {
         Stream<Order> stream = orderRepository.listAll().stream();
         if(model.getCode() != null)
             stream = stream.filter(o -> o.getCode().contains(model.getCode()));
+        if(model.getOrderDate() != null) {
+            LocalDate localDate = LocalDate.ofInstant(model.getOrderDate(), ZoneId.systemDefault());
+            stream = stream.filter(o -> {
+                LocalDate localOrderDate = LocalDate.ofInstant(o.getOrderDate(), ZoneId.systemDefault());
+                return localOrderDate.equals(localDate);
+            });
+        }
         if(model.getCustomerId() != null)
             stream = stream.filter(o -> o.getAccountId().equals(model.getCustomerId()));
         if(model.getStatus() != null)
             stream = stream.filter(o -> o.getStatus().equals(model.getStatus()));
         if(model.getSortedBy() != null) {
             switch (model.getSortedBy()) {
+                case AmountAscending:
+                    stream = stream.sorted(Comparator.comparing(Order::getTotalAmount));
+                    break;
+                case AmountDescending:
+                    stream = stream.sorted(Comparator.comparing(Order::getTotalAmount).reversed());
+                    break;
                 case DateAscending:
                     stream = stream.sorted(Comparator.comparing(Order::getOrderDate));
                     break;
                 case DateDescending:
                     stream = stream.sorted(Comparator.comparing(Order::getOrderDate).reversed());
                     break;
-                case AmountAscending:
-                    stream = stream.sorted(Comparator.comparingDouble(Order::getTotalAmount));
-                    break;
-                case AmountDescending:
-                    stream = stream.sorted(Comparator.comparingDouble(Order::getTotalAmount).reversed());
-                    break;
             }
+        } else {
+            stream = stream.sorted(Comparator.comparing(Order::getOrderDate).reversed());
         }
         return stream.collect(Collectors.toList());
     }

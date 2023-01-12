@@ -13,6 +13,7 @@ package kratos.oms.domain;
 import kratos.oms.seedwork.Helpers;
 import kratos.oms.seedwork.RandomString;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -82,13 +83,15 @@ public class Order extends Domain<UUID> {
     /**
      * Get total amount in VND
      */
-    public double getTotalAmount() {
-        double totalAmount = 0;
+    public BigDecimal getTotalAmount() {
+        BigDecimal totalAmount = BigDecimal.ZERO;
         for (OrderItem item : items) {
             // TODO: convert price that currency is not VND
-            totalAmount += item.getProductPrice() * item.getQuantity();
+            totalAmount = totalAmount.add(BigDecimal.valueOf(item.getProductPrice())
+                            .multiply(BigDecimal.valueOf(item.getQuantity())));
         }
-        totalAmount = (totalAmount * (100 - discount)) / 100;
+        totalAmount = totalAmount.multiply(BigDecimal.valueOf(100 - discount))
+                .divide(BigDecimal.valueOf(100));
         return totalAmount;
     }
 
@@ -192,8 +195,6 @@ public class Order extends Domain<UUID> {
         System.out.printf("%-5s: %s\n", "Status", this.getStatus());
         System.out.printf("%-5s: %.2f%%\n", "Discount", this.getDiscount());
         System.out.printf("%-5s: %s\n", "Date", Helpers.toString(this.getOrderDate()));
-        System.out.printf("%-10s: %-20s %-10s: %-20s\n", "Paid By", this.getPaidBy(),
-                "Paid On", this.getPaidOn());
         System.out.printf("%-10s: %-20s %-10s: %-20s\n", "Completed By", this.getCompletedBy(),
                 "Completed On", this.getCompletedOn());
         System.out.printf("There are %d item(s) in order\n\n", this.getTotalCount());
@@ -207,7 +208,6 @@ public class Order extends Domain<UUID> {
         }
         System.out.println("-".repeat(70));
         // VND by default
-        System.out.printf("%-38s %-10s %-10s\n", "", "Total:",
-                Helpers.toString(this.getTotalAmount(), "VND", true));
+        System.out.printf("%-38s %-10s %-10s\n", "", "Total:", Helpers.toString(this.getTotalAmount()));
     }
 }

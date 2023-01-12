@@ -6,8 +6,8 @@ import java.math.BigDecimal;
 import java.util.List;
 
 public class OrderRevenue {
-    private BigDecimal revenue;
-    private List<Order> orders;
+    private final BigDecimal revenue;
+    private final List<Order> orders;
 
     public OrderRevenue(BigDecimal revenue, List<Order> orders) {
         this.revenue = revenue;

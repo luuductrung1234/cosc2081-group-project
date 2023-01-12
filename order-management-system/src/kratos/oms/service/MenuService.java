@@ -25,7 +25,9 @@ import kratos.oms.model.product.CreateProductModel;
 import kratos.oms.model.product.ProductSort;
 import kratos.oms.model.product.UpdateProductModel;
 import kratos.oms.model.product.SearchProductModel;
+import kratos.oms.model.statistic.MembershipNumber;
 import kratos.oms.model.statistic.OrderRevenue;
+import kratos.oms.model.statistic.TopPaidCustomer;
 import kratos.oms.model.statistic.TopSaleProduct;
 import kratos.oms.seedwork.*;
 
@@ -567,6 +569,8 @@ public class MenuService {
             System.out.println("search by:");
             System.out.printf("\tcode: %s\n",
                     searchModel.get().getCode() == null ? "n/a" : searchModel.get().getCode());
+            System.out.printf("\tdate: %s\n",
+                    searchModel.get().getCode() == null ? "n/a" : Helpers.toString(searchModel.get().getOrderDate()));
             // only allow Admin search order by customer
             if (authService.getPrincipal().getRole() == Role.ADMIN) {
                 Optional<Account> customerOpt = customerService.getDetail(searchModel.get().getCustomerId());
@@ -598,6 +602,8 @@ public class MenuService {
                         SearchOrderModel newSearchModel = new SearchOrderModel();
 
                         Helpers.requestStringInput(scanner, "Filter by code: ", "code", newSearchModel);
+
+                        Helpers.requestInstantInput(scanner, "Filter by date: ", "orderDate", newSearchModel);
 
                         // only allow Admin search order by customer
                         if (authService.getPrincipal().getRole() == Role.ADMIN) {
@@ -659,7 +665,7 @@ public class MenuService {
                     customerService.updateMembership(order.getAccountId());
                 }));
             }
-            addCommonActions(actionOptions, goBack);
+            actionOptions.add(new ActionOption<>("go back", () -> goBack.set(true)));
             Helpers.requestSelectAction(scanner, "Your choice [0-" + (actionOptions.size() - 1) + "]: ", actionOptions);
         } while (!goBack.get());
     }
@@ -669,16 +675,43 @@ public class MenuService {
         do {
             banner("statistic");
             List<ActionOption<Runnable>> actionOptions = new ArrayList<>() {{
-                add(new ActionOption<>("top sale product", () -> {
-                    Instant date = Helpers.requestInstantInput(scanner, "Analyze on date (dd/MM/yyyy): ", null);
-                    topSaleScreen(date);
-                }));
                 add(new ActionOption<>("revenue", () -> {
                     Instant date = Helpers.requestInstantInput(scanner, "Analyze on date (dd/MM/yyyy): ", null);
                     revenueScreen(date);
                 }));
+                add(new ActionOption<>("top sale product", () -> {
+                    Instant date = Helpers.requestInstantInput(scanner, "Analyze on date (dd/MM/yyyy): ", null);
+                    topSaleScreen(date);
+                }));
+                add(new ActionOption<>("top paid customer", () -> {
+                    topPaidScreen();
+                }));
+                add(new ActionOption<>("membership list", () -> {
+                    membershipListScreen();
+                }));
             }};
             addCommonActions(actionOptions, goBack);
+            Helpers.requestSelectAction(scanner, "Your choice [0-" + (actionOptions.size() - 1) + "]: ", actionOptions);
+        } while (!goBack.get());
+    }
+
+    public void membershipListScreen() {
+        AtomicBoolean goBack = new AtomicBoolean(false);
+        do {
+            banner("membership list");
+            List<MembershipNumber> membershipNumbers = statisticService.getMembershipCount();
+
+            System.out.printf("%-7s %-20s %-15s\n", "No.", "Membership", "Customer Count");
+            System.out.println("-".repeat(45));
+            int membershipNo = 0;
+            for (MembershipNumber membership : membershipNumbers) {
+                System.out.printf("%-7s %-20s %-15s\n",
+                        membershipNo, membership.getMembership(), membership.getCustomerCount());
+                membershipNo++;
+            }
+            List<ActionOption<Runnable>> actionOptions = new ArrayList<>() {{
+                add(new ActionOption<>("go back", () -> goBack.set(true)));
+            }};
             Helpers.requestSelectAction(scanner, "Your choice [0-" + (actionOptions.size() - 1) + "]: ", actionOptions);
         } while (!goBack.get());
     }
@@ -718,6 +751,30 @@ public class MenuService {
                     });
                     productDetailScreen(topSaleProducts.get(productNo).getId());
                 }));
+                add(new ActionOption<>("go back", () -> goBack.set(true)));
+            }};
+            Helpers.requestSelectAction(scanner, "Your choice [0-" + (actionOptions.size() - 1) + "]: ", actionOptions);
+        } while (!goBack.get());
+    }
+
+    public void topPaidScreen() {
+        AtomicBoolean goBack = new AtomicBoolean(false);
+        do {
+            banner("top paid customers");
+            List<TopPaidCustomer> topPaidCustomers = statisticService.getTopPaidCustomers();
+
+            System.out.printf("%-7s %-30s %-15s\n", "No.", "Name", "Total Spend");
+            System.out.println("-".repeat(60));
+            if(topPaidCustomers.isEmpty())
+                Logger.printInfo("Customers didn't buy anything...");
+            int customerNo = 0;
+            for (TopPaidCustomer customer : topPaidCustomers) {
+                System.out.printf("%-7s %-30s %-15s\n",
+                        customerNo, customer.getName(),
+                        Helpers.toString(customer.getTotalSpending()));
+                customerNo++;
+            }
+            List<ActionOption<Runnable>> actionOptions = new ArrayList<>() {{
                 add(new ActionOption<>("go back", () -> goBack.set(true)));
             }};
             Helpers.requestSelectAction(scanner, "Your choice [0-" + (actionOptions.size() - 1) + "]: ", actionOptions);

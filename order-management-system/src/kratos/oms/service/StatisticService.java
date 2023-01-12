@@ -1,11 +1,11 @@
 package kratos.oms.service;
 
-import kratos.oms.domain.Order;
-import kratos.oms.domain.OrderItem;
-import kratos.oms.domain.OrderStatus;
-import kratos.oms.domain.Product;
+import kratos.oms.domain.*;
+import kratos.oms.model.statistic.MembershipNumber;
 import kratos.oms.model.statistic.OrderRevenue;
+import kratos.oms.model.statistic.TopPaidCustomer;
 import kratos.oms.model.statistic.TopSaleProduct;
+import kratos.oms.repository.AccountRepository;
 import kratos.oms.repository.OrderRepository;
 import kratos.oms.repository.ProductRepository;
 
@@ -17,27 +17,31 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class StatisticService {
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
+    private final AccountRepository accountRepository;
 
-    public StatisticService(OrderRepository orderRepository, ProductRepository productRepository) {
+    public StatisticService(OrderRepository orderRepository,
+                            ProductRepository productRepository,
+                            AccountRepository accountRepository) {
         this.orderRepository = orderRepository;
         this.productRepository = productRepository;
+        this.accountRepository = accountRepository;
     }
 
     /**
      * Get a list of orders in particular date and calculate total revenue
+     *
      * @param date date to filter completed orders
      * @return a list of order and revenue
      */
     public OrderRevenue getRevenue(Instant date) {
         List<Order> orders = getPaidOrder(date);
-        BigDecimal revenue = BigDecimal.ZERO;
-        for (Order order : orders) {
-            revenue = revenue.add(BigDecimal.valueOf(order.getTotalAmount()));
-        }
+        BigDecimal revenue = orders.stream().map(Order::getTotalAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
         return new OrderRevenue(revenue, orders.stream()
                 .sorted(Comparator.comparing(Order::getTotalAmount).reversed())
                 .collect(Collectors.toList()));
@@ -45,6 +49,7 @@ public class StatisticService {
 
     /**
      * Get top sale products had been bought by customer in particular date (sorted by quantity)
+     *
      * @param date date to filter completed orders
      * @return a list of top sale products
      */
@@ -71,10 +76,45 @@ public class StatisticService {
                 .collect(Collectors.toList());
     }
 
+    public List<TopPaidCustomer> getTopPaidCustomers() {
+        List<TopPaidCustomer> topPaidCustomers = new ArrayList<>();
+        List<Account> customers = accountRepository.listAll().stream()
+                .filter(a -> a.getRole().equals(Role.CUSTOMER)).collect(Collectors.toList());
+        List<Order> paidOrders = getPaidOrder(null);
+        for (Account customer : customers) {
+            BigDecimal totalSpending = paidOrders.stream()
+                    .filter(o -> o.getAccountId().equals(customer.getId()))
+                    .map(Order::getTotalAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+            topPaidCustomers.add(new TopPaidCustomer(customer.getId(), customer.getFullName(), totalSpending));
+        }
+        return topPaidCustomers.stream()
+                .sorted(Comparator.comparing(TopPaidCustomer::getTotalSpending).reversed())
+                .collect(Collectors.toList());
+    }
+
+    public List<MembershipNumber> getMembershipCount() {
+        List<Account> customers = accountRepository.listAll().stream()
+                .filter(a -> a.getRole().equals(Role.CUSTOMER)).collect(Collectors.toList());
+        return new ArrayList<>() {{
+            add(new MembershipNumber(Membership.NONE, customers.stream()
+                    .filter(c -> c.getProfile().getMembership().equals(Membership.NONE)).count()));
+            add(new MembershipNumber(Membership.SILVER, customers.stream()
+                    .filter(c -> c.getProfile().getMembership().equals(Membership.SILVER)).count()));
+            add(new MembershipNumber(Membership.GOLD, customers.stream()
+                    .filter(c -> c.getProfile().getMembership().equals(Membership.GOLD)).count()));
+            add(new MembershipNumber(Membership.PLATINUM, customers.stream()
+                    .filter(c -> c.getProfile().getMembership().equals(Membership.PLATINUM)).count()));
+        }};
+    }
+
     private List<Order> getPaidOrder(Instant date) {
+        Stream<Order> stream = orderRepository.listAll().stream();
+
+        if (date == null)
+            return stream.filter(o -> o.getStatus().equals(OrderStatus.DELIVERED)).collect(Collectors.toList());
+
         LocalDate localDate = LocalDate.ofInstant(date, ZoneId.systemDefault());
-        return orderRepository.listAll().stream()
-                .filter(o -> {
+        return stream.filter(o -> {
                     LocalDate localOrderDate = LocalDate.ofInstant(o.getOrderDate(), ZoneId.systemDefault());
                     return localOrderDate.equals(localDate) && o.getStatus().equals(OrderStatus.DELIVERED);
                 })

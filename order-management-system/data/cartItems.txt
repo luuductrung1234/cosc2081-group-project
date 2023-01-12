@@ -1,2 +1,3 @@
 d89f649a-d691-426d-ac7c-6da154a9b43f,7a7b666f-8a0c-4797-ac13-ee64b4d6edb0,d9a910e4-cf1d-41ab-b23b-9f675ad91421,ViewSonic Monitor HD 24inch,3892000.0,VND,1
 d9c54cd5-e921-49f7-b6b4-ecd7b24cce2c,c5be412f-6ae6-4323-894e-4695c5a3f2d5,e3d08b73-c31d-4893-990f-eb9b70dd3b1b,White Skirt,499000.0,VND,1
+c2766753-f9fe-402a-a634-15b91ef7e846,1eee6c45-04fd-42a4-9ca0-0b638ec1a6dd,d44d89ac-edf2-4856-b575-d891ba1c67ea,Magic Keyboard 2,4499000.0,VND,1
