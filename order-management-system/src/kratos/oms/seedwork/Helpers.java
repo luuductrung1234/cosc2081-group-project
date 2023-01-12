@@ -33,6 +33,8 @@ public class Helpers {
     private static final String PATTERN_FORMAT = "dd/MM/yyyy";
 
     public static String toString(Instant date) {
+        if(date == null)
+            return "n/a";
         DateTimeFormatter formatter = DateTimeFormatter
                 .ofPattern(PATTERN_FORMAT)
                 .withZone(ZoneId.systemDefault());
@@ -43,6 +45,8 @@ public class Helpers {
      * Convert bigDecimal to String with VND format
      */
     public static String toString(BigDecimal value) {
+        if(value == null)
+            return "n/a";
         DecimalFormat decimalFormat = new DecimalFormat("#,###");
         return String.format("%s (%s)", decimalFormat.format(value), "VND");
     }

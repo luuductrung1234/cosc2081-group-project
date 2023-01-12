@@ -570,7 +570,7 @@ public class MenuService {
             System.out.printf("\tcode: %s\n",
                     searchModel.get().getCode() == null ? "n/a" : searchModel.get().getCode());
             System.out.printf("\tdate: %s\n",
-                    searchModel.get().getCode() == null ? "n/a" : Helpers.toString(searchModel.get().getOrderDate()));
+                    searchModel.get().getOrderDate() == null ? "n/a" : Helpers.toString(searchModel.get().getOrderDate()));
             // only allow Admin search order by customer
             if (authService.getPrincipal().getRole() == Role.ADMIN) {
                 Optional<Account> customerOpt = customerService.getDetail(searchModel.get().getCustomerId());
@@ -723,7 +723,7 @@ public class MenuService {
             banner("top sale products");
             List<TopSaleProduct> topSaleProducts = statisticService.getTopSaleProducts(dateFilter.get());
 
-            System.out.printf("Date: %s\n\n", Helpers.toString(date));
+            System.out.printf("Date: %s\n\n", Helpers.toString(dateFilter.get()));
 
             System.out.printf("%-7s %-30s %-15s %-15s %-20s\n", "No.", "Name", "Category", "Quantity", "Amount");
             System.out.println("-".repeat(100));
@@ -789,7 +789,7 @@ public class MenuService {
             OrderRevenue orderRevenue = statisticService.getRevenue(dateFilter.get());
             List<Account> customers = customerService.search(new SearchCustomerModel());
 
-            System.out.printf("Date: %s\n", Helpers.toString(date));
+            System.out.printf("Date: %s\n", Helpers.toString(dateFilter.get()));
             System.out.printf("Revenue: %s\n\n", Helpers.toString(orderRevenue.getRevenue()));
 
             System.out.printf("%-7s %-15s %-15s %-20s %-20s %-20s\n", "No.", "Code", "Status", "Total Amount", "Customer", "Date");
